@@ -958,7 +958,7 @@ const App = () => {
     // Component for October Targets Table (Conditionally Rendered)
     const OctoberTargetsTable = () => (
         <div className="overflow-x-auto mt-12 p-6 bg-green-50 rounded-xl shadow-lg border-t-4 border-green-600">
-            <h2 className="text-3xl font-bold text-green-700 mb-6 border-b-2 border-green-200 pb-2 text-centre">Your OCTOBER Targets: Driving Q4 Success</h2>
+            <h2 className="text-3xl font-bold text-green-700 mb-6 border-b-2 border-green-200 pb-2 text-centre">Your OCTOBER Targets: Driving Q3 Success</h2>
             <table className="min-w-full divide-y divide-gray-200 shadow-md rounded-lg">
                 <thead className="bg-green-600 text-white">
                     <tr>
@@ -984,7 +984,7 @@ const App = () => {
                 </tbody>
             </table>
             <p className="text-sm text-gray-700 mt-6 text-centre">
-                These targets set the foundation for a successful start to Q4. Focus on collaboration within your clusters to hit both individual and shared goals!
+                These targets set the foundation for a successful start to Q3. Focus on collaboration within your clusters to hit both individual and shared goals!
             </p>
         </div>
     );
