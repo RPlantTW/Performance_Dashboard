@@ -1,19 +1,19 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, ComposedChart, ReferenceLine, ScatterChart, Scatter, ZAxis } from 'recharts';
+import { BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, ComposedChart, ReferenceLine, ScatterChart, Scatter, ZAxis, AreaChart, Area } from 'recharts';
 
 // ====================================================================
-// BATTLE OF THE AREAS DATA
+// BATTLE OF THE AREAS DATA (October Snapshot)
 // ====================================================================
 
 // Data provided for S1, S2, S3 and Overall South comparison
 const battleOfTheAreasSourceData = [
-    { region: 'South 1', revenueVsTarget: 91.30, atv: 17.19, ncVsTGT: 65.20, raf: 8.90, vltz: 73.90, wrc: 59.70, unregisteredTransations: 6.70, appAdoption: 37.90, retention: 32.00 },
-    { region: 'South 2', revenueVsTarget: 84.00, atv: 18.76, ncVsTGT: 62.60, raf: 13.10, vltz: 57.10, wrc: 57.10, unregisteredTransations: 9.30, appAdoption: 37.80, retention: 39.30 },
-    { region: 'South 3', revenueVsTarget: 84.90, atv: 17.82, ncVsTGT: 48.60, raf: 4.60, vltz: 68.70, wrc: 56.60, unregisteredTransations: 8.20, appAdoption: 44.00, retention: 36.60 },
-    { region: 'South', revenueVsTarget: 86.90, atv: 17.84, ncVsTGT: 59.80, raf: 8.70, vltz: 67.30, wrc: 58.40, unregisteredTransations: 7.90, appAdoption: 39.80, retention: 34.80 },
+    { region: 'South 1', revenueVsTarget: 92.50, atv: 17.44, ncVsTGT: 57.00, raf: 7.30, vltz: 73.30, wrc: 56.70, unregisteredTransations: 6.20, appAdoption: 53.30, ncAppAdoption: 43.40, retention: 36.50 },
+    { region: 'South 2', revenueVsTarget: 89.30, atv: 19.26, ncVsTGT: 53.10, raf: 9.00, vltz: 57.00, wrc: 62.50, unregisteredTransations: 9.40, appAdoption: 45.50, ncAppAdoption: 50.20, retention: 40.40 },
+    { region: 'South 3', revenueVsTarget: 85.10, atv: 18.08, ncVsTGT: 41.80, raf: 2.50, vltz: 67.90, wrc: 54.80, unregisteredTransations: 7.50, appAdoption: 50.40, ncAppAdoption: 46.50, retention: 38.50 },
+    { region: 'South', revenueVsTarget: 89.10, atv: 18.18, ncVsTGT: 51.70, raf: 6.60, vltz: 66.70, wrc: 57.50, unregisteredTransations: 7.60, appAdoption: 50.20, ncAppAdoption: 45.70, retention: 37.80 },
 ];
 
-// Definition of KPIs and whether higher values are better
+// Definition of KPIs and whether higher values are better (NC App Adoption added)
 const Kpis = [
     { key: 'revenueVsTarget', label: 'Rev vs TGT', format: (v) => v.toFixed(1) + '%', higherIsBetter: true },
     { key: 'atv', label: 'ATV (£)', format: (v) => '£' + v.toFixed(2), higherIsBetter: true },
@@ -23,6 +23,7 @@ const Kpis = [
     { key: 'wrc', label: 'WRC %', format: (v) => v.toFixed(1) + '%', higherIsBetter: true },
     { key: 'unregisteredTransations', label: 'Unreg %', format: (v) => v.toFixed(1) + '%', higherIsBetter: false }, // LOWER IS BETTER
     { key: 'appAdoption', label: 'App Adop %', format: (v) => v.toFixed(1) + '%', higherIsBetter: true },
+    { key: 'ncAppAdoption', label: 'NC App Adop %', format: (v) => v.toFixed(1) + '%', higherIsBetter: true }, // NEW KPI
     { key: 'retention', label: 'RET %', format: (v) => v.toFixed(1) + '%', higherIsBetter: true },
 ];
 
@@ -37,7 +38,7 @@ const calculateBattleRanks = (data) => {
         // Sort values to determine ranks (higherIsBetter toggles sorting order)
         const sortedValues = [...values].sort((a, b) => kpi.higherIsBetter ? b - a : a - b);
         
-        // Assign rank to each region (1, 2, or 3)
+        // Assign rank to each region (1-indexed)
         rankedData.forEach(item => {
             if (item.region === 'South') {
                 item[`${kpi.key}Rank`] = null; // Overall row has no rank
@@ -55,27 +56,28 @@ const battleOfTheAreasData = calculateBattleRanks(battleOfTheAreasSourceData);
 
 
 // ====================================================================
-// NEW Q2/SEPTEMBER DATA
+// OCTOBER DATA - FULL REPLACEMENT with new values
 // ====================================================================
 
-// Raw September KPI Data (Store Level) - Used for Cluster Aggregation
-const rawSeptemberKpiData = [
-    { store: 'Bristol', cluster: 'S1-1-B', Sales: 22516.48, SalesTarget: 23500.00, SalesVsTGT: 95.80, Transacrions: 1441, ATV: 15.63, NC: 276, NCTGT: 378, NCVsTGT: 73.00, NCS_BUYING_LIQUID: 18, NCS_Buying_LIQUID_non_eligible: 3, NCS_BUYING_LIQUID_WRC_FIRST: 0, WRC: 71.00, NC_Emails_Captured: 26, NC_Email_Capture_percent: 94.90, NC_Phone_Numbers_captured: 238, NC_Phone_Number_capture_percent: 86.20, Unresgistered_Transactions: 11, Unregistered_percent: 4.90, NCs_from_RAF: 28, RAF_percent: 10.10, TOTAL_NUBER_OF_TRADE_IN_KITS: 20, Trade_in_Revenue_Kits_and_Flex_Pro_batteries: 386.25, Open_Tank_Kits_Sales_inc_Flex_pro_batteries: 2535.24, Trade_in_Vs_Kit_Sales: 15.20, TOTAL_3rd_Party_and_VLTZ_Revenue: 14873.28, TOTAL_3rd_Party_and_VLTZ_R_of_TOTAL_REVENUES: 66.10, Party_pound: 2475.67, VLTZ_pound: 12397.62, VLTZ_percent: 83.40, Sales_This_Year_if_LFL_store: 22516.48, Last_Year_Full_Month: 26248.29, percent_currently_achieved_of_LY: 85.80, Prev_Months_NCs: 196, Number_of_One_offs: 149, Number_of_Returning_Customers: 472, Retention: 24.00 },
-    { store: 'Gloucester', cluster: 'S1-1-G', Sales: 13154.74, SalesTarget: 15400.00, SalesVsTGT: 85.40, Transacrions: 683, ATV: 19.26, NC: 28, NCTGT: 72, NCVsTGT: 39.20, NCS_BUYING_LIQUID: 16, NCS_Buying_LIQUID_non_eligible: 0, NCS_BUYING_LIQUID_WRC_FIRST: 12, WRC: 75.00, NC_Emails_Captured: 27, NC_Email_Capture_percent: 96.40, NC_Phone_Numbers_captured: 27, NC_Phone_Number_capture_percent: 96.40, Unresgistered_Transactions: 2, Unregistered_percent: 2.90, NCs_from_RAF: 5, RAF_percent: 17.90, TOTAL_NUBER_OF_TRADE_IN_KITS: 10, Trade_in_Revenue_Kits_and_Flex_Pro_batteries: 187.76, Open_Tank_Kits_Sales_inc_Flex_pro_batteries: 1389.74, Trade_in_Vs_Kit_Sales: 13.50, TOTAL_3rd_Party_and_VLTZ_Revenue: 7390.39, TOTAL_3rd_Party_and_VLTZ_R_of_TOTAL_REVENUES: 56.20, Party_pound: 1537.89, VLTZ_pound: 5852.49, VLTZ_percent: 79.20, Sales_This_Year_if_LFL_store: 13154.74, Last_Year_Full_Month: 14158.48, percent_currently_achieved_of_LY: 92.90, Prev_Months_NCs: 26, Number_of_One_offs: 18, Number_of_Returning_Customers: 83, Retention: 30.80 },
-    { store: 'Nottingham', cluster: 'S1-1-N', Sales: 10700.66, SalesTarget: 15000.00, SalesVsTGT: 71.30, Transacrions: 713, ATV: 15.01, NC: 75, NCTGT: 140, NCVsTGT: 53.60, NCS_BUYING_LIQUID: 42, NCS_Buying_LIQUID_non_eligible: 0, NCS_BUYING_LIQUID_WRC_FIRST: 10, WRC: 23.80, NC_Emails_Captured: 62, NC_Email_Capture_percent: 82.70, NC_Phone_Numbers_captured: 91, NC_Phone_Number_capture_percent: 121.50, Unresgistered_Transactions: 10, Unregistered_percent: 14.30, NCs_from_RAF: 7, RAF_percent: 9.30, TOTAL_NUBER_OF_TRADE_IN_KITS: 2, Trade_in_Revenue_Kits_and_Flex_Pro_batteries: 96.20, Open_Tank_Kits_Sales_inc_Flex_pro_batteries: 1164.16, Trade_in_Vs_Kit_Sales: 8.30, TOTAL_3rd_Party_and_VLTZ_Revenue: 6616.84, TOTAL_3rd_Party_and_VLTZ_R_of_TOTAL_REVENUES: 61.80, Party_pound: 2197.78, VLTZ_pound: 4419.06, VLTZ_percent: 66.80, Sales_This_Year_if_LFL_store: 10700.66, Last_Year_Full_Month: 16177.12, percent_currently_achieved_of_LY: 66.10, Prev_Months_NCs: 76, Number_of_One_offs: 64, Number_of_Returning_Customers: 121, Retention: 15.80 },
-    { store: 'Rugby', cluster: 'S1-1-R', Sales: 10026.11, SalesTarget: 10400.00, SalesVsTGT: 96.40, Transacrions: 500, ATV: 20.05, NC: 35, NCTGT: 77, NCVsTGT: 45.40, NCS_BUYING_LIQUID: 21, NCS_Buying_LIQUID_non_eligible: 0, NCS_BUYING_LIQUID_WRC_FIRST: 3, WRC: 66.70, NC_Emails_Captured: 31, NC_Email_Capture_percent: 88.60, NC_Phone_Numbers_captured: 30, NC_Phone_Number_capture_percent: 85.70, Unresgistered_Transactions: 6, Unregistered_percent: 1.20, NCs_from_RAF: 3, RAF_percent: 8.60, TOTAL_NUBER_OF_TRADE_IN_KITS: 8, Trade_in_Revenue_Kits_and_Flex_Pro_batteries: 172.66, Open_Tank_Kits_Sales_inc_Flex_pro_batteries: 1036.89, Trade_in_Vs_Kit_Sales: 16.70, TOTAL_3rd_Party_and_VLTZ_Revenue: 5279.47, TOTAL_3rd_Party_and_VLTZ_R_of_TOTAL_REVENUES: 52.70, Party_pound: 1869.15, VLTZ_pound: 3410.33, VLTZ_percent: 64.60, Sales_This_Year_if_LFL_store: 10026.11, Last_Year_Full_Month: 10035.87, percent_currently_achieved_of_LY: 99.90, Prev_Months_NCs: 33, Number_of_One_offs: 18, Number_of_Returning_Customers: 154, Retention: 45.50 },
-    { store: 'Barnstaple', cluster: 'S1-2-BE', Sales: 16192.75, SalesTarget: 16100.00, SalesVsTGT: 100.60, Transacrions: 896, ATV: 18.07, NC: 38, NCTGT: 49, NCVsTGT: 77.60, NCS_BUYING_LIQUID: 24, NCS_Buying_LIQUID_non_eligible: 0, NCS_BUYING_LIQUID_WRC_FIRST: 3, WRC: 50.00, NC_Emails_Captured: 35, NC_Email_Capture_percent: 92.10, NC_Phone_Numbers_captured: 35, NC_Phone_Number_capture_percent: 92.10, Unresgistered_Transactions: 9, Unregistered_percent: 11.00, NCs_from_RAF: 5, RAF_percent: 13.20, TOTAL_NUBER_OF_TRADE_IN_KITS: 15, Trade_in_Revenue_Kits_and_Flex_Pro_batteries: 336.24, Open_Tank_Kits_Sales_inc_Flex_pro_batteries: 1969.59, Trade_in_Vs_Kit_Sales: 17.10, TOTAL_3rd_Party_and_VLTZ_Revenue: 9262.75, TOTAL_3rd_Party_and_VLTZ_R_of_TOTAL_REVENUES: 57.20, Party_pound: 2463.50, VLTZ_pound: 6799.25, VLTZ_percent: 73.40, Sales_This_Year_if_LFL_store: 16192.75, Last_Year_Full_Month: 15390.22, percent_currently_achieved_of_LY: 105.20, Prev_Months_NCs: 41, Number_of_One_offs: 21, Number_of_Returning_Customers: 120, Retention: 48.80 },
-    { store: 'Exeter', cluster: 'S1-2-BE', Sales: 23744.81, SalesTarget: 27700.00, SalesVsTGT: 85.70, Transacrions: 1623, ATV: 14.63, NC: 162, NCTGT: 230, NCVsTGT: 70.40, NCS_BUYING_LIQUID: 111, NCS_Buying_LIQUID_non_eligible: 0, NCS_BUYING_LIQUID_WRC_FIRST: 14, WRC: 59.50, NC_Emails_Captured: 142, NC_Email_Capture_percent: 87.70, NC_Phone_Numbers_captured: 142, NC_Phone_Number_capture_percent: 87.70, Unresgistered_Transactions: 236, Unregistered_percent: 14.50, NCs_from_RAF: 11, RAF_percent: 6.80, TOTAL_NUBER_OF_TRADE_IN_KITS: 13, Trade_in_Revenue_Kits_and_Flex_Pro_batteries: 394.52, Open_Tank_Kits_Sales_inc_Flex_pro_batteries: 3318.32, Trade_in_Vs_Kit_Sales: 11.90, TOTAL_3rd_Party_and_VLTZ_Revenue: 15210.88, TOTAL_3rd_Party_and_VLTZ_R_of_TOTAL_REVENUES: 64.10, Party_pound: 6246.24, VLTZ_pound: 8964.63, VLTZ_percent: 58.90, Sales_This_Year_if_LFL_store: 23744.81, Last_Year_Full_Month: 29557.06, percent_currently_achieved_of_LY: 80.30, Prev_Months_NCs: 135, Number_of_One_offs: 90, Number_of_Returning_Customers: 453, Retention: 33.30 },
-    { store: 'Birmingham', cluster: 'S1-2-BT', Sales: 8117.31, SalesTarget: 11000.00, SalesVsTGT: 73.80, Transacrions: 559, ATV: 14.52, NC: 58, NCTGT: 76, NCVsTGT: 76.50, NCS_BUYING_LIQUID: 41, NCS_Buying_LIQUID_non_eligible: 0, NCS_BUYING_LIQUID_WRC_FIRST: 4, WRC: 73.20, NC_Emails_Captured: 44, NC_Email_Capture_percent: 75.90, NC_Phone_Numbers_captured: 43, NC_Phone_Number_capture_percent: 74.10, Unresgistered_Transactions: 87, Unregistered_percent: 15.60, NCs_from_RAF: 1, RAF_percent: 1.70, TOTAL_NUBER_OF_TRADE_IN_KITS: 0, Trade_in_Revenue_Kits_and_Flex_Pro_batteries: 0.00, Open_Tank_Kits_Sales_inc_Flex_pro_batteries: 808.32, Trade_in_Vs_Kit_Sales: 0.00, TOTAL_3rd_Party_and_VLTZ_Revenue: 5430.90, TOTAL_3rd_Party_and_VLTZ_R_of_TOTAL_REVENUES: 66.90, Party_pound: 2234.44, VLTZ_pound: 3196.46, VLTZ_percent: 58.90, Sales_This_Year_if_LFL_store: 8117.31, Last_Year_Full_Month: 11330.88, percent_currently_achieved_of_LY: 71.60, Prev_Months_NCs: 44, Number_of_One_offs: 32, Number_of_Returning_Customers: 122, Retention: 27.30 },
-    { store: 'Tyburn', cluster: 'S1-2-BT', Sales: 9661.74, SalesTarget: 10800.00, SalesVsTGT: 89.50, Transacrions: 432, ATV: 22.37, NC: 12, NCTGT: 35, NCVsTGT: 34.30, NCS_BUYING_LIQUID: 5, NCS_Buying_LIQUID_non_eligible: 0, NCS_BUYING_LIQUID_WRC_FIRST: 0, WRC: 60.00, NC_Emails_Captured: 7, NC_Email_Capture_percent: 58.30, NC_Phone_Numbers_captured: 8, NC_Phone_Number_capture_percent: 66.70, Unresgistered_Transactions: 32, Unregistered_percent: 7.40, NCs_from_RAF: 0, RAF_percent: 0.00, TOTAL_NUBER_OF_TRADE_IN_KITS: 8, Trade_in_Revenue_Kits_and_Flex_Pro_batteries: 194.57, Open_Tank_Kits_Sales_inc_Flex_pro_batteries: 788.37, Trade_in_Vs_Kit_Sales: 24.70, TOTAL_3rd_Party_and_VLTZ_Revenue: 3120.27, TOTAL_3rd_Party_and_VLTZ_R_of_TOTAL_REVENUES: 32.30, Party_pound: 1494.65, VLTZ_pound: 1625.62, VLTZ_percent: 52.10, Sales_This_Year_if_LFL_store: 9661.74, Last_Year_Full_Month: 10740.10, percent_currently_achieved_of_LY: 90.00, Prev_Months_NCs: 15, Number_of_One_offs: 8, Number_of_Returning_Customers: 74, Retention: 46.70 },
-    { store: 'Wolves Chapel Ash', cluster: 'S1-2-CP', Sales: 10800.08, SalesTarget: 10600.00, SalesVsTGT: 101.90, Transacrions: 481, ATV: 22.45, NC: 22, NCTGT: 37, NCVsTGT: 59.50, NCS_BUYING_LIQUID: 16, NCS_Buying_LIQUID_non_eligible: 0, NCS_BUYING_LIQUID_WRC_FIRST: 2, WRC: 72.70, NC_Emails_Captured: 22, NC_Email_Capture_percent: 100.00, NC_Phone_Numbers_captured: 16, NC_Phone_Number_capture_percent: 72.70, Unresgistered_Transactions: 20, Unregistered_percent: 4.20, NCs_from_RAF: 9, RAF_percent: 40.90, TOTAL_NUBER_OF_TRADE_IN_KITS: 9, Trade_in_Revenue_Kits_and_Flex_Pro_batteries: 276.86, Open_Tank_Kits_Sales_inc_Flex_pro_batteries: 1133.00, Trade_in_Vs_Kit_Sales: 24.40, TOTAL_3rd_Party_and_VLTZ_Revenue: 4092.98, TOTAL_3rd_Party_and_VLTZ_R_of_TOTAL_REVENUES: 37.90, Party_pound: 927.00, VLTZ_pound: 3165.98, VLTZ_percent: 77.40, Sales_This_Year_if_LFL_store: 10800.08, Last_Year_Full_Month: 10724.27, percent_currently_achieved_of_LY: 100.70, Prev_Months_NCs: 18, Number_of_One_offs: 15, Number_of_Returning_Customers: 31, Retention: 16.70 },
-    { store: 'Wolves Penn Road', cluster: 'S1-2-CP', Sales: 8305.73, SalesTarget: 8600.00, SalesVsTGT: 96.60, Transacrions: 427, ATV: 19.45, NC: 21, NCTGT: 41, NCVsTGT: 51.20, NCS_BUYING_LIQUID: 19, NCS_Buying_LIQUID_non_eligible: 0, NCS_BUYING_LIQUID_WRC_FIRST: 2, WRC: 90.50, NC_Emails_Captured: 21, NC_Email_Capture_percent: 100.00, NC_Phone_Numbers_captured: 17, NC_Phone_Number_capture_percent: 81.00, Unresgistered_Transactions: 21, Unregistered_percent: 4.90, NCs_from_RAF: 5, RAF_percent: 23.80, TOTAL_NUBER_OF_TRADE_IN_KITS: 12, Trade_in_Revenue_Kits_and_Flex_Pro_batteries: 292.68, Open_Tank_Kits_Sales_inc_Flex_pro_batteries: 771.69, Trade_in_Vs_Kit_Sales: 37.90, TOTAL_3rd_Party_and_VLTZ_Revenue: 4102.70, TOTAL_3rd_Party_and_VLTZ_R_of_TOTAL_REVENUES: 49.40, Party_pound: 1490.26, VLTZ_pound: 2612.44, VLTZ_percent: 63.70, Sales_This_Year_if_LFL_store: 8305.73, Last_Year_Full_Month: 8729.40, percent_currently_achieved_of_LY: 95.10, Prev_Months_NCs: 27, Number_of_One_offs: 17, Number_of_Returning_Customers: 103, Retention: 37.00 },
-    { store: 'Bridgend', cluster: 'S1-3-BMR', Sales: 14103.19, SalesTarget: 15100.00, SalesVsTGT: 93.40, Transacrions: 900, ATV: 15.67, NC: 67, NCTGT: 85, NCVsTGT: 78.80, NCS_BUYING_LIQUID: 47, NCS_Buying_LIQUID_non_eligible: 0, NCS_BUYING_LIQUID_WRC_FIRST: 4, WRC: 70.10, NC_Emails_Captured: 47, NC_Email_Capture_percent: 70.10, NC_Phone_Numbers_captured: 50, NC_Phone_Number_capture_percent: 74.60, Unresgistered_Transactions: 36, Unregistered_percent: 4.00, NCs_from_RAF: 5, RAF_percent: 7.50, TOTAL_NUBER_OF_TRADE_IN_KITS: 4, Trade_in_Revenue_Kits_and_Flex_Pro_batteries: 107.96, Open_Tank_Kits_Sales_inc_Flex_pro_batteries: 1490.37, Trade_in_Vs_Kit_Sales: 7.20, TOTAL_3rd_Party_and_VLTZ_Revenue: 10162.42, TOTAL_3rd_Party_and_VLTZ_R_of_TOTAL_REVENUES: 72.10, Party_pound: 2435.25, VLTZ_pound: 7727.16, VLTZ_percent: 76.00, Sales_This_Year_if_LFL_store: 14103.19, Last_Year_Full_Month: 14611.50, percent_currently_achieved_of_LY: 96.50, Prev_Months_NCs: 45, Number_of_One_offs: 27, Number_of_Returning_Customers: 184, Retention: 40.00 },
-    { store: 'Merthyr', cluster: 'S1-3-BMR', Sales: 14105.79, SalesTarget: 16600.00, SalesVsTGT: 85.00, Transacrions: 897, ATV: 15.73, NC: 58, NCTGT: 127, NCVsTGT: 45.70, NCS_BUYING_LIQUID: 40, NCS_Buying_LIQUID_non_eligible: 0, NCS_BUYING_LIQUID_WRC_FIRST: 5, WRC: 69.00, NC_Emails_Captured: 50, NC_Email_Capture_percent: 86.20, NC_Phone_Numbers_captured: 56, NC_Phone_Number_capture_percent: 96.60, Unresgistered_Transactions: 41, Unregistered_percent: 4.60, NCs_from_RAF: 6, RAF_percent: 10.30, TOTAL_NUBER_OF_TRADE_IN_KITS: 5, Trade_in_Revenue_Kits_and_Flex_Pro_batteries: 167.15, Open_Tank_Kits_Sales_inc_Flex_pro_batteries: 2048.98, Trade_in_Vs_Kit_Sales: 8.20, TOTAL_3rd_Party_and_VLTZ_Revenue: 10796.73, TOTAL_3rd_Party_and_VLTZ_R_of_TOTAL_REVENUES: 76.50, Party_pound: 2631.69, VLTZ_pound: 8165.04, VLTZ_percent: 75.60, Sales_This_Year_if_LFL_store: 14105.79, Last_Year_Full_Month: 18412.70, percent_currently_achieved_of_LY: 76.60, Prev_Months_NCs: 45, Number_of_One_offs: 33, Number_of_Returning_Customers: 122, Retention: 26.70 },
-    { store: 'Rumney', cluster: 'S1-3-BMR', Sales: 19610.38, SalesTarget: 24800.00, SalesVsTGT: 79.10, Transacrions: 1099, ATV: 17.84, NC: 51, NCTGT: 85, NCVsTGT: 60.00, NCS_BUYING_LIQUID: 35, NCS_Buying_LIQUID_non_eligible: 0, NCS_BUYING_LIQUID_WRC_FIRST: 4, WRC: 68.60, NC_Emails_Captured: 45, NC_Email_Capture_percent: 88.20, NC_Phone_Numbers_captured: 46, NC_Phone_Number_capture_percent: 90.20, Unresgistered_Transactions: 63, Unregistered_percent: 5.70, NCs_from_RAF: 7, RAF_percent: 13.70, TOTAL_NUBER_OF_TRADE_IN_KITS: 11, Trade_in_Revenue_Kits_and_Flex_Pro_batteries: 319.37, Open_Tank_Kits_Sales_inc_Flex_pro_batteries: 2113.62, Trade_in_Vs_Kit_Sales: 15.10, TOTAL_3rd_Party_and_VLTZ_Revenue: 11576.61, TOTAL_3rd_Party_and_VLTZ_R_of_TOTAL_REVENUES: 59.00, Party_pound: 2246.01, VLTZ_pound: 9330.60, VLTZ_percent: 80.60, Sales_This_Year_if_LFL_store: 19610.38, Last_Year_Full_Month: 24266.20, percent_currently_achieved_of_LY: 80.80, Prev_Months_NCs: 33, Number_of_One_offs: 21, Number_of_Returning_Customers: 123, Retention: 36.40 },
-    { store: 'Madeley', cluster: 'S1-3-MSW', Sales: 22962.59, SalesTarget: 22400.00, SalesVsTGT: 102.50, Transacrions: 1301, ATV: 17.65, NC: 104, NCTGT: 157, NCVsTGT: 66.20, NCS_BUYING_LIQUID: 74, NCS_Buying_LIQUID_non_eligible: 0, NCS_BUYING_LIQUID_WRC_FIRST: 9, WRC: 71.20, NC_Emails_Captured: 92, NC_Email_Capture_percent: 88.50, NC_Phone_Numbers_captured: 89, NC_Phone_Number_capture_percent: 85.60, Unresgistered_Transactions: 0, Unregistered_percent: 0.00, NCs_from_RAF: 13, RAF_percent: 12.50, TOTAL_NUBER_OF_TRADE_IN_KITS: 20, Trade_in_Revenue_Kits_and_Flex_Pro_batteries: 448.67, Open_Tank_Kits_Sales_inc_Flex_pro_batteries: 2082.56, Trade_in_Vs_Kit_Sales: 21.50, TOTAL_3rd_Party_and_VLTZ_Revenue: 12495.34, TOTAL_3rd_Party_and_VLTZ_R_of_TOTAL_REVENUES: 54.40, Party_pound: 1336.66, VLTZ_pound: 11158.68, VLTZ_percent: 89.30, Sales_This_Year_if_LFL_store: 22962.59, Last_Year_Full_Month: 19748.59, percent_currently_achieved_of_LY: 116.30, Prev_Months_NCs: 132, Number_of_One_offs: 76, Number_of_Returning_Customers: 564, Retention: 42.40 },
-    { store: 'Shrewsbury', cluster: 'S1-3-MSW', Sales: 15717.32, SalesTarget: 15400.00, SalesVsTGT: 102.10, Transacrions: 848, ATV: 18.53, NC: 84, NCTGT: 112, NCVsTGT: 75.00, NCS_BUYING_LIQUID: 36, NCS_Buying_LIQUID_non_eligible: 0, NCS_BUYING_LIQUID_WRC_FIRST: 6, WRC: 36.10, NC_Emails_Captured: 64, NC_Email_Capture_percent: 76.20, NC_Phone_Numbers_captured: 58, NC_Phone_Number_capture_percent: 69.00, Unresgistered_Transactions: 17, Unregistered_percent: 2.00, NCs_from_RAF: 2, RAF_percent: 2.40, TOTAL_NUBER_OF_TRADE_IN_KITS: 15, Trade_in_Revenue_Kits_and_Flex_Pro_batteries: 350.88, Open_Tank_Kits_Sales_inc_Flex_pro_batteries: 1958.82, Trade_in_Vs_Kit_Sales: 17.90, TOTAL_3rd_Party_and_VLTZ_Revenue: 6328.24, TOTAL_3rd_Party_and_VLTZ_R_of_TOTAL_REVENUES: 40.30, Party_pound: 1644.82, VLTZ_pound: 4683.42, VLTZ_percent: 74.00, Sales_This_Year_if_LFL_store: 15717.32, Last_Year_Full_Month: 15642.12, percent_currently_achieved_of_LY: 100.50, Prev_Months_NCs: 121, Number_of_One_offs: 84, Number_of_Returning_Customers: 373, Retention: 30.60 },
-    { store: 'Wellington', cluster: 'S1-3-MSW', Sales: 11972.04, SalesTarget: 10500.00, SalesVsTGT: 114.00, Transacrions: 680, ATV: 17.61, NC: 70, NCTGT: 93, NCVsTGT: 75.30, NCS_BUYING_LIQUID: 44, NCS_Buying_LIQUID_non_eligible: 0, NCS_BUYING_LIQUID_WRC_FIRST: 5, WRC: 52.30, NC_Emails_Captured: 54, NC_Email_Capture_percent: 77.10, NC_Phone_Numbers_captured: 48, NC_Phone_Number_capture_percent: 68.60, Unresgistered_Transactions: 11, Unregistered_percent: 1.60, NCs_from_RAF: 9, RAF_percent: 12.90, TOTAL_NUBER_OF_TRADE_IN_KITS: 9, Trade_in_Revenue_Kits_and_Flex_Pro_batteries: 233.51, Open_Tank_Kits_Sales_inc_Flex_pro_batteries: 1538.49, Trade_in_Vs_Kit_Sales: 15.20, TOTAL_3rd_Party_and_VLTZ_Revenue: 4821.80, TOTAL_3rd_Party_and_VLTZ_R_of_TOTAL_REVENUES: 40.30, Party_pound: 1064.23, VLTZ_pound: 3757.58, VLTZ_percent: 77.90, Sales_This_Year_if_LFL_store: 11972.04, Last_Year_Full_Month: 9587.01, percent_currently_achieved_of_LY: 124.90, Prev_Months_NCs: 63, Number_of_One_offs: 41, Number_of_Returning_Customers: 223, Retention: 34.90 },
+// Raw OCTOBER KPI Data (Store Level) - Used for Cluster Aggregation and Detail Table
+// Data has been updated based on the user's latest provided table
+const rawOctoberKpiData = [
+    { store: 'Bristol', cluster: 'S1-1-B', Sales: 22208.84, SalesTarget: 23600.00, SalesVsTGT: 94.10, Transacrions: 1481, ATV: 15.00, NC: 235, NCTGT: 367, NCVsTGT: 64.00, NCS_BUYING_LIQUID: 135, NCS_Buying_LIQUID_non_eligible: 0, NCS_BUYING_LIQUID_WRC_FIRST: 8, WRC: 65.20, NC_Emails_Captured: 225, NC_Email_Capture_percent: 95.70, NC_Phone_Numbers_captured: 198, NC_Phone_Number_capture_percent: 84.30, Unresgistered_Transactions: 111, Unregistered_percent: 7.50, NCs_from_RAF: 14, RAF_percent: 6.00, TOTAL_NUBER_OF_TRADE_IN_KITS: 34, Trade_in_Revenue_Kits_and_Flex_Pro_batteries: 438.84, Open_Tank_Kits_Sales_inc_Flex_pro_batteries: 1988.67, Trade_in_Vs_Kit_Sales: 22.10, TOTAL_3rd_Party_and_VLTZ_Revenue: 14900.83, TOTAL_3rd_Party_and_VLTZ_R_of_TOTAL_REVENUES: 67.10, Party_pound: 3060.24, VLTZ_pound: 11840.58, VLTZ_percent: 79.50, Sales_This_Year_if_LFL_store: 22208.84, Last_Year_Full_Month: 27127.04, percent_currently_achieved_of_LY: 81.90, Prev_Months_NCs: 276, Number_of_One_offs: 191, Number_of_Returning_Customers: 853, Retention: 30.80 },
+    { store: 'Gloucester', cluster: 'S1-1-G', Sales: 14112.80, SalesTarget: 15500.00, SalesVsTGT: 91.10, Transacrions: 726, ATV: 19.44, NC: 29, NCTGT: 63, NCVsTGT: 45.80, NCS_BUYING_LIQUID: 18, NCS_Buying_LIQUID_non_eligible: 0, NCS_BUYING_LIQUID_WRC_FIRST: 16, WRC: 88.90, NC_Emails_Captured: 29, NC_Email_Capture_percent: 100.00, NC_Phone_Numbers_captured: 28, NC_Phone_Number_capture_percent: 96.60, Unresgistered_Transactions: 20, Unregistered_percent: 2.80, NCs_from_RAF: 5, RAF_percent: 17.20, TOTAL_NUBER_OF_TRADE_IN_KITS: 8, Trade_in_Revenue_Kits_and_Flex_Pro_batteries: 169.72, Open_Tank_Kits_Sales_inc_Flex_pro_batteries: 1200.14, Trade_in_Vs_Kit_Sales: 14.10, TOTAL_3rd_Party_and_VLTZ_Revenue: 7891.82, TOTAL_3rd_Party_and_VLTZ_R_of_TOTAL_REVENUES: 55.90, Party_pound: 1582.18, VLTZ_pound: 6309.64, VLTZ_percent: 80.00, Sales_This_Year_if_LFL_store: 14112.80, Last_Year_Full_Month: 13706.35, percent_currently_achieved_of_LY: 103.00, Prev_Months_NCs: 28, Number_of_One_offs: 19, Number_of_Returning_Customers: 93, Retention: 32.10 },
+    { store: 'Nottingham', cluster: 'S1-1-N', Sales: 10102.59, SalesTarget: 15100.00, SalesVsTGT: 66.90, Transacrions: 656, ATV: 15.40, NC: 56, NCTGT: 134, NCVsTGT: 41.80, NCS_BUYING_LIQUID: 39, NCS_Buying_LIQUID_non_eligible: 0, NCS_BUYING_LIQUID_WRC_FIRST: 17, WRC: 43.60, NC_Emails_Captured: 51, NC_Email_Capture_percent: 91.10, NC_Phone_Numbers_captured: 10, NC_Phone_Number_capture_percent: 17.90, Unresgistered_Transactions: 78, Unregistered_percent: 11.90, NCs_from_RAF: 7, RAF_percent: 12.50, TOTAL_NUBER_OF_TRADE_IN_KITS: 7, Trade_in_Revenue_Kits_and_Flex_Pro_batteries: 140.73, Open_Tank_Kits_Sales_inc_Flex_pro_batteries: 784.31, Trade_in_Vs_Kit_Sales: 17.90, TOTAL_3rd_Party_and_VLTZ_Revenue: 5996.20, TOTAL_3rd_Party_and_VLTZ_R_of_TOTAL_REVENUES: 59.40, Party_pound: 2439.11, VLTZ_pound: 3557.09, VLTZ_percent: 59.30, Sales_This_Year_if_LFL_store: 10102.59, Last_Year_Full_Month: 17871.54, percent_currently_achieved_of_LY: 56.50, Prev_Months_NCs: 75, Number_of_One_offs: 56, Number_of_Returning_Customers: 192, Retention: 25.30 },
+    { store: 'Rugby', cluster: 'S1-1-R', Sales: 10121.19, SalesTarget: 10400.00, SalesVsTGT: 97.30, Transacrions: 489, ATV: 20.70, NC: 34, NCTGT: 69, NCVsTGT: 49.30, NCS_BUYING_LIQUID: 19, NCS_Buying_LIQUID_non_eligible: 0, NCS_BUYING_LIQUID_WRC_FIRST: 14, WRC: 73.70, NC_Emails_Captured: 31, NC_Email_Capture_percent: 91.20, NC_Phone_Numbers_captured: 29, NC_Phone_Number_capture_percent: 85.30, Unresgistered_Transactions: 7, Unregistered_percent: 1.40, NCs_from_RAF: 8, RAF_percent: 23.50, TOTAL_NUBER_OF_TRADE_IN_KITS: 8, Trade_in_Revenue_Kits_and_Flex_Pro_batteries: 186.13, Open_Tank_Kits_Sales_inc_Flex_pro_batteries: 1016.05, Trade_in_Vs_Kit_Sales: 18.30, TOTAL_3rd_Party_and_VLTZ_Revenue: 5173.41, TOTAL_3rd_Party_and_VLTZ_R_of_TOTAL_REVENUES: 51.10, Party_pound: 1928.15, VLTZ_pound: 3245.26, VLTZ_percent: 62.70, Sales_This_Year_if_LFL_store: 10121.19, Last_Year_Full_Month: 9944.41, percent_currently_achieved_of_LY: 101.80, Prev_Months_NCs: 35, Number_of_One_offs: 25, Number_of_Returning_Customers: 102, Retention: 28.60 },
+    { store: 'Barnstaple', cluster: 'S1-2-BE', Sales: 15962.41, SalesTarget: 16200.00, SalesVsTGT: 98.50, Transacrions: 871, ATV: 18.33, NC: 20, NCTGT: 51, NCVsTGT: 38.90, NCS_BUYING_LIQUID: 14, NCS_Buying_LIQUID_non_eligible: 0, NCS_BUYING_LIQUID_WRC_FIRST: 6, WRC: 70.00, NC_Emails_Captured: 20, NC_Email_Capture_percent: 100.00, NC_Phone_Numbers_captured: 20, NC_Phone_Number_capture_percent: 100.00, Unresgistered_Transactions: 78, Unregistered_percent: 9.00, NCs_from_RAF: 2, RAF_percent: 10.00, TOTAL_NUBER_OF_TRADE_IN_KITS: 11, Trade_in_Revenue_Kits_and_Flex_Pro_batteries: 258.36, Open_Tank_Kits_Sales_inc_Flex_pro_batteries: 1666.39, Trade_in_Vs_Kit_Sales: 15.50, TOTAL_3rd_Party_and_VLTZ_Revenue: 9426.84, TOTAL_3rd_Party_and_VLTZ_R_of_TOTAL_REVENUES: 59.10, Party_pound: 2810.84, VLTZ_pound: 6616.00, VLTZ_percent: 70.20, Sales_This_Year_if_LFL_store: 15962.41, Last_Year_Full_Month: 16072.55, percent_currently_achieved_of_LY: 99.30, Prev_Months_NCs: 38, Number_of_One_offs: 18, Number_of_Returning_Customers: 205, Retention: 52.60 },
+    { store: 'Exeter', cluster: 'S1-2-BE', Sales: 22331.33, SalesTarget: 27800.00, SalesVsTGT: 80.30, Transacrions: 1557, ATV: 14.34, NC: 194, NCTGT: 228, NCVsTGT: 85.00, NCS_BUYING_LIQUID: 123, NCS_Buying_LIQUID_non_eligible: 0, NCS_BUYING_LIQUID_WRC_FIRST: 36, WRC: 63.40, NC_Emails_Captured: 162, NC_Email_Capture_percent: 83.50, NC_Phone_Numbers_captured: 147, NC_Phone_Number_capture_percent: 75.80, Unresgistered_Transactions: 171, Unregistered_percent: 11.00, NCs_from_RAF: 12, RAF_percent: 6.20, TOTAL_NUBER_OF_TRADE_IN_KITS: 12, Trade_in_Revenue_Kits_and_Flex_Pro_batteries: 298.19, Open_Tank_Kits_Sales_inc_Flex_pro_batteries: 2018.34, Trade_in_Vs_Kit_Sales: 14.80, TOTAL_3rd_Party_and_VLTZ_Revenue: 14628.84, TOTAL_3rd_Party_and_VLTZ_R_of_TOTAL_REVENUES: 65.50, Party_pound: 5997.95, VLTZ_pound: 8630.88, VLTZ_percent: 59.00, Sales_This_Year_if_LFL_store: 22331.33, Last_Year_Full_Month: 29977.53, percent_currently_achieved_of_LY: 74.50, Prev_Months_NCs: 194, Number_of_One_offs: 86, Number_of_Returning_Customers: 764, Retention: 46.90 },
+    { store: 'Birmingham', cluster: 'S1-2-BT', Sales: 7866.79, SalesTarget: 11100.00, SalesVsTGT: 70.90, Transacrions: 559, ATV: 14.07, NC: 44, NCTGT: 71, NCVsTGT: 62.30, NCS_BUYING_LIQUID: 29, NCS_Buying_LIQUID_non_eligible: 0, NCS_BUYING_LIQUID_WRC_FIRST: 8, WRC: 65.90, NC_Emails_Captured: 39, NC_Email_Capture_percent: 88.60, NC_Phone_Numbers_captured: 34, NC_Phone_Number_capture_percent: 77.30, Unresgistered_Transactions: 91, Unregistered_percent: 16.30, NCs_from_RAF: 5, RAF_percent: 11.40, TOTAL_NUBER_OF_TRADE_IN_KITS: 5, Trade_in_Revenue_Kits_and_Flex_Pro_batteries: 107.20, Open_Tank_Kits_Sales_inc_Flex_pro_batteries: 883.19, Trade_in_Vs_Kit_Sales: 12.10, TOTAL_3rd_Party_and_VLTZ_Revenue: 5302.36, TOTAL_3rd_Party_and_VLTZ_R_of_TOTAL_REVENUES: 67.40, Party_pound: 2338.74, VLTZ_pound: 2963.63, VLTZ_percent: 55.90, Sales_This_Year_if_LFL_store: 7866.79, Last_Year_Full_Month: 12860.38, percent_currently_achieved_of_LY: 61.20, Prev_Months_NCs: 58, Number_of_One_offs: 41, Number_of_Returning_Customers: 172, Retention: 29.30 },
+    { store: 'Tyburn', cluster: 'S1-2-BT', Sales: 10431.48, SalesTarget: 10900.00, SalesVsTGT: 95.70, Transacrions: 447, ATV: 23.34, NC: 18, NCTGT: 31, NCVsTGT: 58.10, NCS_BUYING_LIQUID: 9, NCS_Buying_LIQUID_non_eligible: 0, NCS_BUYING_LIQUID_WRC_FIRST: 9, WRC: 100.00, NC_Emails_Captured: 9, NC_Email_Capture_percent: 50.00, NC_Phone_Numbers_captured: 14, NC_Phone_Number_capture_percent: 77.80, Unresgistered_Transactions: 33, Unregistered_percent: 7.40, NCs_from_RAF: 3, RAF_percent: 16.70, TOTAL_NUBER_OF_TRADE_IN_KITS: 13, Trade_in_Revenue_Kits_and_Flex_Pro_batteries: 342.35, Open_Tank_Kits_Sales_inc_Flex_pro_batteries: 969.80, Trade_in_Vs_Kit_Sales: 35.30, TOTAL_3rd_Party_and_VLTZ_Revenue: 3506.91, TOTAL_3rd_Party_and_VLTZ_R_of_TOTAL_REVENUES: 33.60, Party_pound: 1506.58, VLTZ_pound: 2000.32, VLTZ_percent: 57.00, Sales_This_Year_if_LFL_store: 10431.48, Last_Year_Full_Month: 10637.57, percent_currently_achieved_of_LY: 98.10, Prev_Months_NCs: 18, Number_of_One_offs: 5, Number_of_Returning_Customers: 57, Retention: 58.30 },
+    { store: 'Wolves Chapel Ash', cluster: 'S1-2-CP', Sales: 10078.05, SalesTarget: 10700.00, SalesVsTGT: 94.20, Transacrions: 511, ATV: 19.72, NC: 14, NCTGT: 34, NCVsTGT: 40.80, NCS_BUYING_LIQUID: 14, NCS_Buying_LIQUID_non_eligible: 0, NCS_BUYING_LIQUID_WRC_FIRST: 8, WRC: 73.70, NC_Emails_Captured: 19, NC_Email_Capture_percent: 90.50, NC_Phone_Numbers_captured: 14, NC_Phone_Number_capture_percent: 66.70, Unresgistered_Transactions: 22, Unregistered_percent: 4.30, NCs_from_RAF: 3, RAF_percent: 14.30, TOTAL_NUBER_OF_TRADE_IN_KITS: 4, Trade_in_Revenue_Kits_and_Flex_Pro_batteries: 107.16, Open_Tank_Kits_Sales_inc_Flex_pro_batteries: 874.98, Trade_in_Vs_Kit_Sales: 12.20, TOTAL_3rd_Party_and_VLTZ_Revenue: 3687.19, TOTAL_3rd_Party_and_VLTZ_R_of_TOTAL_REVENUES: 36.60, Party_pound: 875.53, VLTZ_pound: 2811.66, VLTZ_percent: 76.30, Sales_This_Year_if_LFL_store: 10078.05, Last_Year_Full_Month: 11705.51, percent_currently_achieved_of_LY: 86.10, Prev_Months_NCs: 22, Number_of_One_offs: 10, Number_of_Returning_Customers: 125, Retention: 54.50 },
+    { store: 'Wolves Penn Road', cluster: 'S1-2-CP', Sales: 8486.99, SalesTarget: 8500.00, SalesVsTGT: 99.80, Transacrions: 427, ATV: 19.88, NC: 16, NCTGT: 53, NCVsTGT: 30.00, NCS_BUYING_LIQUID: 12, NCS_Buying_LIQUID_non_eligible: 0, NCS_BUYING_LIQUID_WRC_FIRST: 9, WRC: 75.00, NC_Emails_Captured: 15, NC_Email_Capture_percent: 93.80, NC_Phone_Numbers_captured: 15, NC_Phone_Number_capture_percent: 93.80, Unresgistered_Transactions: 29, Unregistered_percent: 6.80, NCs_from_RAF: 4, RAF_percent: 25.00, TOTAL_NUBER_OF_TRADE_IN_KITS: 8, Trade_in_Revenue_Kits_and_Flex_Pro_batteries: 205.37, Open_Tank_Kits_Sales_inc_Flex_pro_batteries: 774.84, Trade_in_Vs_Kit_Sales: 26.50, TOTAL_3rd_Party_and_VLTZ_Revenue: 4105.63, TOTAL_3rd_Party_and_VLTZ_R_of_TOTAL_REVENUES: 48.40, Party_pound: 1280.43, VLTZ_pound: 2825.20, VLTZ_percent: 68.80, Sales_This_Year_if_LFL_store: 8486.99, Last_Year_Full_Month: 9556.24, percent_currently_achieved_of_LY: 88.80, Prev_Months_NCs: 21, Number_of_One_offs: 14, Number_of_Returning_Customers: 73, Retention: 33.30 },
+    { store: 'Bridgend', cluster: 'S1-3-BMR', Sales: 15806.51, SalesTarget: 15100.00, SalesVsTGT: 104.70, Transacrions: 948, ATV: 16.67, NC: 45, NCTGT: 98, NCVsTGT: 45.90, NCS_BUYING_LIQUID: 29, NCS_Buying_LIQUID_non_eligible: 0, NCS_BUYING_LIQUID_WRC_FIRST: 8, WRC: 64.40, NC_Emails_Captured: 36, NC_Email_Capture_percent: 80.00, NC_Phone_Numbers_captured: 24, NC_Phone_Number_capture_percent: 53.30, Unresgistered_Transactions: 58, Unregistered_percent: 6.10, NCs_from_RAF: 6, RAF_percent: 13.30, TOTAL_NUBER_OF_TRADE_IN_KITS: 3, Trade_in_Revenue_Kits_and_Flex_Pro_batteries: 105.08, Open_Tank_Kits_Sales_inc_Flex_pro_batteries: 1771.43, Trade_in_Vs_Kit_Sales: 5.90, TOTAL_3rd_Party_and_VLTZ_Revenue: 11382.62, TOTAL_3rd_Party_and_VLTZ_R_of_TOTAL_REVENUES: 72.00, Party_pound: 2798.91, VLTZ_pound: 8583.71, VLTZ_percent: 75.40, Sales_This_Year_if_LFL_store: 15806.51, Last_Year_Full_Month: 14065.78, percent_currently_achieved_of_LY: 112.40, Prev_Months_NCs: 67, Number_of_One_offs: 39, Number_of_Returning_Customers: 284, Retention: 41.80 },
+    { store: 'Merthyr', cluster: 'S1-3-BMR', Sales: 13731.43, SalesTarget: 16600.00, SalesVsTGT: 82.70, Transacrions: 877, ATV: 15.66, NC: 53, NCTGT: 111, NCVsTGT: 47.70, NCS_BUYING_LIQUID: 34, NCS_Buying_LIQUID_non_eligible: 0, NCS_BUYING_LIQUID_WRC_FIRST: 10, WRC: 64.20, NC_Emails_Captured: 45, NC_Email_Capture_percent: 84.90, NC_Phone_Numbers_captured: 50, NC_Phone_Number_capture_percent: 94.30, Unresgistered_Transactions: 40, Unregistered_percent: 4.60, NCs_from_RAF: 4, RAF_percent: 7.50, TOTAL_NUBER_OF_TRADE_IN_KITS: 5, Trade_in_Revenue_Kits_and_Flex_Pro_batteries: 128.55, Open_Tank_Kits_Sales_inc_Flex_pro_batteries: 1258.18, Trade_in_Vs_Kit_Sales: 10.20, TOTAL_3rd_Party_and_VLTZ_Revenue: 10842.85, TOTAL_3rd_Party_and_VLTZ_R_of_TOTAL_REVENUES: 79.00, Party_pound: 2543.87, VLTZ_pound: 8298.98, VLTZ_percent: 76.50, Sales_This_Year_if_LFL_store: 13731.43, Last_Year_Full_Month: 17668.58, percent_currently_achieved_of_LY: 77.70, Prev_Months_NCs: 53, Number_of_One_offs: 36, Number_of_Returning_Customers: 223, Retention: 37.90 },
+    { store: 'Rumney', cluster: 'S1-3-BMR', Sales: 20215.31, SalesTarget: 24800.00, SalesVsTGT: 81.50, Transacrions: 1163, ATV: 17.38, NC: 49, NCTGT: 78, NCVsTGT: 62.80, NCS_BUYING_LIQUID: 33, NCS_Buying_LIQUID_non_eligible: 0, NCS_BUYING_LIQUID_WRC_FIRST: 8, WRC: 67.30, NC_Emails_Captured: 44, NC_Email_Capture_percent: 89.80, NC_Phone_Numbers_captured: 45, NC_Phone_Number_capture_percent: 91.80, Unresgistered_Transactions: 71, Unregistered_percent: 6.10, NCs_from_RAF: 4, RAF_percent: 8.20, TOTAL_NUBER_OF_TRADE_IN_KITS: 15, Trade_in_Revenue_Kits_and_Flex_Pro_batteries: 333.58, Open_Tank_Kits_Sales_inc_Flex_pro_batteries: 2015.00, Trade_in_Vs_Kit_Sales: 16.60, TOTAL_3rd_Party_and_VLTZ_Revenue: 11479.74, TOTAL_3rd_Party_and_VLTZ_R_of_TOTAL_REVENUES: 56.80, Party_pound: 1830.70, VLTZ_pound: 9649.05, VLTZ_percent: 84.10, Sales_This_Year_if_LFL_store: 20215.31, Last_Year_Full_Month: 25718.56, percent_currently_achieved_of_LY: 78.60, Prev_Months_NCs: 51, Number_of_One_offs: 31, Number_of_Returning_Customers: 120, Retention: 39.20 },
+    { store: 'Madeley', cluster: 'S1-3-MSW', Sales: 25465.00, SalesTarget: 22600.00, SalesVsTGT: 112.70, Transacrions: 1313, ATV: 19.39, NC: 74, NCTGT: 166, NCVsTGT: 44.50, NCS_BUYING_LIQUID: 47, NCS_Buying_LIQUID_non_eligible: 0, NCS_BUYING_LIQUID_WRC_FIRST: 10, WRC: 63.50, NC_Emails_Captured: 66, NC_Email_Capture_percent: 89.20, NC_Phone_Numbers_captured: 65, NC_Phone_Number_capture_percent: 87.80, Unresgistered_Transactions: 9, Unregistered_percent: 0.70, NCs_from_RAF: 10, RAF_percent: 13.50, TOTAL_NUBER_OF_TRADE_IN_KITS: 15, Trade_in_Revenue_Kits_and_Flex_Pro_batteries: 343.47, Open_Tank_Kits_Sales_inc_Flex_pro_batteries: 2550.79, Trade_in_Vs_Kit_Sales: 13.50, TOTAL_3rd_Party_and_VLTZ_Revenue: 12671.25, TOTAL_3rd_Party_and_VLTZ_R_of_TOTAL_REVENUES: 49.80, Party_pound: 1384.54, VLTZ_pound: 11286.71, VLTZ_percent: 89.10, Sales_This_Year_if_LFL_store: 25465.00, Last_Year_Full_Month: 23631.27, percent_currently_achieved_of_LY: 107.80, Prev_Months_NCs: 104, Number_of_One_offs: 62, Number_of_Returning_Customers: 424, Retention: 40.40 },
+    { store: 'Shrewsbury', cluster: 'S1-3-MSW', Sales: 16607.76, SalesTarget: 15400.00, SalesVsTGT: 107.80, Transacrions: 835, ATV: 19.89, NC: 86, NCTGT: 125, NCVsTGT: 69.00, NCS_BUYING_LIQUID: 49, NCS_Buying_LIQUID_non_eligible: 0, NCS_BUYING_LIQUID_WRC_FIRST: 17, WRC: 56.90, NC_Emails_Captured: 69, NC_Email_Capture_percent: 80.20, NC_Phone_Numbers_captured: 63, NC_Phone_Number_capture_percent: 73.30, Unresgistered_Transactions: 20, Unregistered_percent: 2.40, NCs_from_RAF: 4, RAF_percent: 4.70, TOTAL_NUBER_OF_TRADE_IN_KITS: 15, Trade_in_Revenue_Kits_and_Flex_Pro_batteries: 406.24, Open_Tank_Kits_Sales_inc_Flex_pro_batteries: 2112.98, Trade_in_Vs_Kit_Sales: 19.20, TOTAL_3rd_Party_and_VLTZ_Revenue: 6263.56, TOTAL_3rd_Party_and_VLTZ_R_of_TOTAL_REVENUES: 37.70, Party_pound: 1764.97, VLTZ_pound: 4498.59, VLTZ_percent: 71.80, Sales_This_Year_if_LFL_store: 16607.76, Last_Year_Full_Month: 17196.98, percent_currently_achieved_of_LY: 96.60, Prev_Months_NCs: 84, Number_of_One_offs: 59, Number_of_Returning_Customers: 252, Retention: 29.80 },
+    { store: 'Wellington', cluster: 'S1-3-MSW', Sales: 12178.54, SalesTarget: 10500.00, SalesVsTGT: 116.00, Transacrions: 655, ATV: 18.59, NC: 43, NCTGT: 92, NCVsTGT: 46.70, NCS_BUYING_LIQUID: 29, NCS_Buying_LIQUID_non_eligible: 0, NCS_BUYING_LIQUID_WRC_FIRST: 14, WRC: 67.40, NC_Emails_Captured: 40, NC_Email_Capture_percent: 93.00, NC_Phone_Numbers_captured: 38, NC_Phone_Number_capture_percent: 88.40, Unresgistered_Transactions: 6, Unregistered_percent: 0.90, NCs_from_RAF: 9, RAF_percent: 20.90, TOTAL_NUBER_OF_TRADE_IN_KITS: 10, Trade_in_Revenue_Kits_and_Flex_Pro_batteries: 332.70, Open_Tank_Kits_Sales_inc_Flex_pro_batteries: 1385.84, Trade_in_Vs_Kit_Sales: 24.00, TOTAL_3rd_Party_and_VLTZ_Revenue: 5117.92, TOTAL_3rd_Party_and_VLTZ_R_of_TOTAL_REVENUES: 42.00, Party_pound: 1183.29, VLTZ_pound: 3934.63, VLTZ_percent: 76.90, Sales_This_Year_if_LFL_store: 12178.54, Last_Year_Full_Month: 7009.03, percent_currently_achieved_of_LY: 173.80, Prev_Months_NCs: 70, Number_of_One_offs: 45, Number_of_Returning_Customers: 252, Retention: 35.70 },
 ];
 
 // Define which KPIs are used in the detailed table and whether high is good
@@ -86,10 +88,10 @@ const detailedKpiDefinitions = [
     { key: 'SalesVsTGT', label: 'Sales vs TGT %', format: (v) => v.toFixed(1) + '%', higherIsBetter: true },
     { key: 'NCVsTGT', label: 'NC vs TGT %', format: (v) => v.toFixed(1) + '%', higherIsBetter: true },
     { key: 'ATV', label: 'ATV', format: (v) => '£' + v.toFixed(2), higherIsBetter: true },
-    { key: 'Retention', label: 'RET %', format: (v) => v.toFixed(1) + '%', higherIsBetter: true }, // CHANGED HERE
+    { key: 'Retention', label: 'RET %', format: (v) => v.toFixed(1) + '%', higherIsBetter: true },
     { key: 'WRC', label: 'WRC %', format: (v) => v.toFixed(1) + '%', higherIsBetter: true },
     { key: 'VLTZ_percent', label: 'VLTZ %', format: (v) => v.toFixed(1) + '%', higherIsBetter: true },
-    { key: 'Unregistered_percent', label: 'Unreg %', format: (v) => v.toFixed(1) + '%', higherIsBetter: false },
+    { key: 'Unregistered_percent', label: 'Unreg %', format: (v) => v.toFixed(1) + '%', higherIsBetter: false }, // LOWER IS BETTER
     { key: 'Trade_in_Vs_Kit_Sales', label: 'Trade-In %', format: (v) => v.toFixed(1) + '%', higherIsBetter: true },
     { key: 'RAF_percent', label: 'RAF %', format: (v) => v.toFixed(1) + '%', higherIsBetter: true },
     { key: 'NC_Email_Capture_percent', label: 'Email Cap %', format: (v) => v.toFixed(1) + '%', higherIsBetter: true },
@@ -102,7 +104,6 @@ function calculateSouthAreaAverages(data) {
 
     data.forEach(store => {
         count++;
-        // NOTE: Only calculate averages for the actual numerical KPIs used for comparison (excluding store/cluster names)
         detailedKpiDefinitions.filter(kpi => kpi.key !== 'store' && kpi.key !== 'cluster').forEach(kpi => {
             const value = store[kpi.key];
             if (!totals[kpi.key]) {
@@ -120,7 +121,7 @@ function calculateSouthAreaAverages(data) {
     return averages;
 }
 
-const southAreaAverages = calculateSouthAreaAverages(rawSeptemberKpiData);
+const southAreaAverages = calculateSouthAreaAverages(rawOctoberKpiData);
 
 function aggregateDataByCluster(data) {
     const aggregated = {};
@@ -153,7 +154,7 @@ function aggregateDataByCluster(data) {
         aggregated[cluster].UnregisteredSum += store.Unregistered_percent;
         aggregated[cluster].VLTZSum += store.VLTZ_percent;
         aggregated[cluster].TradeInSum += store.Trade_in_Vs_Kit_Sales;
-        aggregated[cluster].RetentionSum += store.Retention; // September Retention
+        aggregated[cluster].RetentionSum += store.Retention; // October Retention
     });
 
     const result = [];
@@ -172,24 +173,24 @@ function aggregateDataByCluster(data) {
             ncTargetQ3: agg.NCTargetSum,
             ncVsTarget: ncVsTarget,
             
-            // Key Metric Snapshot (September - for highlights/correlation)
-            salesVsTargetSep: salesVsTarget,
-            ncVsTargetSep: ncVsTarget,
+            // Key Metric Snapshot (October - for highlights/correlation)
+            salesVsTargetOct: salesVsTarget, // Renamed from Sep to Oct
+            ncVsTargetOct: ncVsTarget, // Renamed from Sep to Oct
             wrc: agg.WRCSum / agg.count, // Average WRC %
             unregisteredTransaction: agg.UnregisteredSum / agg.count, // Average Unregistered %
             tradeInVsKitSales: agg.TradeInSum / agg.count, // Average Trade In %
             vltz: agg.VLTZSum / agg.count, // Average VLTZ %
-            septemberRetention: agg.RetentionSum / agg.count, // Average Retention %
+            octoberRetention: agg.RetentionSum / agg.count, // Renamed from September to October Retention
         });
     }
 
     return result;
 }
 
-const clusterKpiMetrics = aggregateDataByCluster(rawSeptemberKpiData);
+const clusterKpiMetrics = aggregateDataByCluster(rawOctoberKpiData);
 
 
-// 1. CLUSTER SALES / NC DATA (September)
+// 1. CLUSTER SALES / NC DATA (October)
 const q3SalesNcData = clusterKpiMetrics.map(item => ({
     cluster: item.cluster,
     salesQ3: item.salesQ3,
@@ -200,40 +201,39 @@ const q3SalesNcData = clusterKpiMetrics.map(item => ({
     ncVsTarget: item.ncVsTarget,
 }));
 
-// 2. CLUSTER KEY METRICS SNAPSHOT (September)
+// 2. CLUSTER KEY METRICS SNAPSHOT (October)
 const newQ3KeyMetricsWithRetention = clusterKpiMetrics.map(item => ({
     cluster: item.cluster,
-    salesVsTargetSep: item.salesVsTargetSep,
-    ncVsTargetSep: item.ncVsTargetSep,
+    salesVsTargetOct: item.salesVsTargetOct, // Used new Oct name
+    ncVsTargetOct: item.ncVsTargetOct, // Used new Oct name
     wrc: item.wrc,
     unregisteredTransaction: item.unregisteredTransaction,
     tradeInVsKitSales: item.tradeInVsKitSales,
     vltz: item.vltz,
-    septemberRetention: item.septemberRetention,
+    octoberRetention: item.octoberRetention, // Used new Oct name
 }));
 
 
-// Q2 Monthly Retention Data (July, Aug, Sep)
+// Q2 Monthly Retention Data (July, Aug, Sep, Oct) - Data is correct as per user
 const storeRetentionData = [
-    { store: 'Bristol', cluster: 'S1-1-B', July: 34.10, August: 37.60, September: 24.00 },
-    { store: 'Gloucester', cluster: 'S1-1-G', July: 40.00, August: 44.40, September: 30.80 },
-    { store: 'Nottingham', cluster: 'S1-1-N', July: 28.60, August: 22.60, September: 15.80 },
-    { store: 'Rugby', cluster: 'S1-1-R', July: 30.00, August: 38.20, September: 45.50 },
-    { store: 'Barnstaple', cluster: 'S1-2-BE', July: 39.50, August: 56.10, September: 48.80 },
-    { store: 'Exeter', cluster: 'S1-2-BE', July: 37.50, August: 28.50, September: 33.30 },
-    { store: 'Birmingham', cluster: 'S1-2-BT', July: 50.00, August: 43.60, September: 27.30 },
-    { store: 'Tyburn', cluster: 'S1-2-BT', July: 41.20, August: 30.80, September: 46.70 },
-    { store: 'Wolves Chapel Ash', cluster: 'S1-2-CP', July: 38.10, August: 35.70, September: 16.70 },
-    { store: 'Wolves Penn Road', cluster: 'S1-2-CP', July: 43.20, August: 53.30, September: 37.00 },
-    { store: 'Bridgend', cluster: 'S1-3-BMR', July: 55.90, August: 40.90, September: 40.00 },
-    { store: 'Merthyr', cluster: 'S1-3-BMR', July: 39.10, August: 40.60, September: 26.70 },
-    { store: 'Rumney', cluster: 'S1-3-BMR', July: 42.40, August: 40.00, September: 36.40 },
-    { store: 'Madeley', cluster: 'S1-3-MSW', July: 48.80, August: 33.80, September: 42.40 },
-    { store: 'Shrewsbury', cluster: 'S1-3-MSW', July: 40.50, August: 32.20, September: 30.60 },
-    { store: 'Wellington', cluster: 'S1-3-MSW', July: 35.10, August: 37.10, September: 34.90 },
+    { store: 'Bristol', cluster: 'S1-1-B', July: 34.10, August: 37.60, September: 24.00, October: 30.80 },
+    { store: 'Gloucester', cluster: 'S1-1-G', July: 40.00, August: 44.40, September: 30.80, October: 32.10 },
+    { store: 'Nottingham', cluster: 'S1-1-N', July: 28.60, August: 22.60, September: 15.80, October: 25.30 },
+    { store: 'Rugby', cluster: 'S1-1-R', July: 30.00, August: 38.20, September: 45.50, October: 28.60 },
+    { store: 'Barnstaple', cluster: 'S1-2-BE', July: 39.50, August: 56.10, September: 48.80, October: 52.60 },
+    { store: 'Exeter', cluster: 'S1-2-BE', July: 37.50, August: 28.50, September: 33.30, October: 46.90 },
+    { store: 'Birmingham', cluster: 'S1-2-BT', July: 50.00, August: 43.60, September: 27.30, October: 29.30 },
+    { store: 'Tyburn', cluster: 'S1-2-BT', July: 41.20, August: 30.80, September: 46.70, October: 58.30 },
+    { store: 'Wolves Chapel Ash', cluster: 'S1-2-CP', July: 38.10, August: 35.70, September: 16.70, October: 54.50 },
+    { store: 'Wolves Penn Road', cluster: 'S1-2-CP', July: 43.20, August: 53.30, September: 37.00, October: 33.30 },
+    { store: 'Bridgend', cluster: 'S1-3-BMR', July: 55.90, August: 40.90, September: 40.00, October: 41.80 },
+    { store: 'Merthyr', cluster: 'S1-3-BMR', July: 39.10, August: 40.60, September: 26.70, October: 37.90 },
+    { store: 'Rumney', cluster: 'S1-3-BMR', July: 42.40, August: 40.00, September: 36.40, October: 39.20 },
+    { store: 'Madeley', cluster: 'S1-3-MSW', July: 48.80, August: 33.80, September: 42.40, October: 40.40 },
+    { store: 'Shrewsbury', cluster: 'S1-3-MSW', July: 40.50, August: 32.20, September: 30.60, October: 29.80 },
+    { store: 'Wellington', cluster: 'S1-3-MSW', July: 35.10, August: 37.10, September: 34.90, October: 35.70 },
 ];
 
-// FIX: Moving calculateClusterRetention to global scope
 const calculateClusterRetention = (month) => {
     const clusterValues = {};
     const clusterCounts = {};
@@ -260,27 +260,28 @@ const q2RetentionData = clusterKpiMetrics.map(item => ({
     julyRetention: calculateClusterRetention('July')[item.cluster] || 0,
     augustRetention: calculateClusterRetention('August')[item.cluster] || 0,
     septemberRetention: calculateClusterRetention('September')[item.cluster] || 0,
+    octoberRetention: calculateClusterRetention('October')[item.cluster] || 0,
 }));
 
 
-// Q2 Monthly ACB Data (July, Aug, Sep)
+// Q2 Monthly ACB Data (July, Aug, Sep, Oct) - Data is correct as per user
 const storeAcbData = [
-    { store: 'Bristol', cluster: 'S1-1-B', July: 944, August: 894, September: 963 },
-    { store: 'Gloucester', cluster: 'S1-1-G', July: 388, August: 375, September: 367 },
-    { store: 'Nottingham', cluster: 'S1-1-N', July: 403, August: 433, September: 407 },
-    { store: 'Rugby', cluster: 'S1-1-R', July: 280, August: 285, September: 284 },
-    { store: 'Barnstaple', cluster: 'S1-2-BE', July: 450, August: 430, September: 438 },
-    { store: 'Exeter', cluster: 'S1-2-BE', July: 847, August: 872, September: 951 },
-    { store: 'Birmingham', cluster: 'S1-2-BT', July: 321, August: 313, September: 332 },
-    { store: 'Tyburn', cluster: 'S1-2-BT', July: 240, August: 221, September: 235 },
-    { store: 'Wolves Chapel Ash', cluster: 'S1-2-CP', July: 286, August: 295, September: 273 },
-    { store: 'Wolves Penn Road', cluster: 'S1-2-CP', July: 251, August: 241, September: 232 },
-    { store: 'Bridgend', cluster: 'S1-3-BMR', July: 409, August: 422, September: 448 },
-    { store: 'Merthyr', cluster: 'S1-3-BMR', July: 451, August: 445, September: 433 },
-    { store: 'Rumney', cluster: 'S1-3-BMR', July: 609, August: 584, September: 569 },
-    { store: 'Madeley', cluster: 'S1-3-MSW', July: 723, August: 690, September: 680 },
-    { store: 'Shrewsbury', cluster: 'S1-3-MSW', July: 492, August: 552, September: 496 },
-    { store: 'Wellington', cluster: 'S1-3-MSW', July: 393, August: 411, September: 388 },
+    { store: 'Bristol', cluster: 'S1-1-B', July: 944, August: 894, September: 963, October: 932 },
+    { store: 'Gloucester', cluster: 'S1-1-G', July: 388, August: 375, September: 367, October: 365 },
+    { store: 'Nottingham', cluster: 'S1-1-N', July: 403, August: 433, September: 407, October: 350 },
+    { store: 'Rugby', cluster: 'S1-1-R', July: 280, August: 285, September: 284, October: 267 },
+    { store: 'Barnstaple', cluster: 'S1-2-BE', July: 450, August: 430, September: 438, October: 395 },
+    { store: 'Exeter', cluster: 'S1-2-BE', July: 847, August: 872, September: 951, October: 902 },
+    { store: 'Birmingham', cluster: 'S1-2-BT', July: 321, August: 313, September: 332, October: 314 },
+    { store: 'Tyburn', cluster: 'S1-2-BT', July: 240, August: 221, September: 235, October: 230 },
+    { store: 'Wolves Chapel Ash', cluster: 'S1-2-CP', July: 286, August: 295, September: 273, October: 291 },
+    { store: 'Wolves Penn Road', cluster: 'S1-2-CP', July: 251, August: 241, September: 232, October: 221 },
+    { store: 'Bridgend', cluster: 'S1-3-BMR', July: 409, August: 422, September: 448, October: 440 },
+    { store: 'Merthyr', cluster: 'S1-3-BMR', July: 451, August: 445, September: 433, October: 416 },
+    { store: 'Rumney', cluster: 'S1-3-BMR', July: 609, August: 584, September: 569, October: 570 },
+    { store: 'Madeley', cluster: 'S1-3-MSW', July: 723, August: 690, September: 680, October: 668 },
+    { store: 'Shrewsbury', cluster: 'S1-3-MSW', July: 492, August: 552, September: 496, October: 470 },
+    { store: 'Wellington', cluster: 'S1-3-MSW', July: 393, August: 411, September: 388, October: 359 },
 ];
 
 const calculateClusterAcb = (month) => {
@@ -299,15 +300,17 @@ const calculateClusterAcb = (month) => {
 const julyAcbTotals = calculateClusterAcb('July');
 const augustAcbTotals = calculateClusterAcb('August');
 const septemberAcbTotals = calculateClusterAcb('September');
+const octoberAcbTotals = calculateClusterAcb('October');
 
 const q2AcbData = q3SalesNcData.map(item => ({
     cluster: item.cluster,
     julyACB: julyAcbTotals[item.cluster] || 0,
     augustACB: augustAcbTotals[item.cluster] || 0,
     septemberACB: septemberAcbTotals[item.cluster] || 0,
+    octoberACB: octoberAcbTotals[item.cluster] || 0,
 }));
 
-// NEW DATA: H1 Audit Results (MWW and Compliance)
+// NEW DATA: H1 Audit Results (MWW and Compliance) - Remains defined but section hidden
 const storeAuditData = [
     { store: 'Bristol', cluster: 'S1-1-B', MWW: 98.00, Compliance: 93.72 },
     { store: 'Gloucester', cluster: 'S1-1-G', MWW: 88.00, Compliance: 95.71 },
@@ -363,88 +366,124 @@ function aggregateAuditData(data) {
 
 const { mwwResults: q3MwwAuditData, complianceResults: q3ComplianceAuditData } = aggregateAuditData(storeAuditData);
 
-// Updated Data: Google Reviews (September)
+// Updated Google Reviews Data (REPLACED)
 const q3GoogleReviewsData = [
-    { store: 'Barnstaple', reviews: 0, lastRank: 2, currentRank: 2, change: 0 },
-    { store: 'Birmingham', reviews: 3, lastRank: 3, currentRank: 4, change: -1 },
+    { store: 'Barnstaple', reviews: 2, lastRank: 2, currentRank: 2, change: 0 },
+    { store: 'Birmingham', reviews: 3, lastRank: 4, currentRank: 6, change: -2 },
     { store: 'Bridgend', reviews: 0, lastRank: 5, currentRank: 6, change: -1 },
-    { store: 'Bristol', reviews: 24, lastRank: 5, currentRank: 5, change: 0 },
-    { store: 'Exeter', reviews: 3, lastRank: 2, currentRank: 3, change: -1 },
-    { store: 'Gloucester', reviews: 0, lastRank: 3, currentRank: 6, change: -3 },
-    { store: 'Madeley', reviews: 41, lastRank: 1, currentRank: 1, change: 0 },
-    { store: 'Merthyr Tydfil', reviews: 0, lastRank: 2, currentRank: 3, change: -1 },
-    { store: 'Nottingham', reviews: 3, lastRank: 6, currentRank: 4, change: 2 },
-    { store: 'Rugby', reviews: 2, lastRank: 2, currentRank: 6, change: -4 },
-    { store: 'Rumney', reviews: 0, lastRank: 2, currentRank: 1, change: 1 },
-    { store: 'Shrewsbury', reviews: 4, lastRank: 1, currentRank: 2, change: -1 },
+    { store: 'Bristol', reviews: 21, lastRank: 5, currentRank: 3, change: 2 },
+    { store: 'Exeter', reviews: 3, lastRank: 3, currentRank: 5, change: -2 },
+    { store: 'Gloucester', reviews: 2, lastRank: 6, currentRank: 8, change: -2 },
+    { store: 'Madeley', reviews: 40, lastRank: 1, currentRank: 1, change: 0 },
+    { store: 'Merthyr Tydfil', reviews: 0, lastRank: 3, currentRank: 3, change: 0 },
+    { store: 'Nottingham', reviews: 3, lastRank: 4, currentRank: 5, change: -1 },
+    { store: 'Rugby', reviews: 1, lastRank: 6, currentRank: 4, change: 2 },
+    { store: 'Rumney', reviews: 0, lastRank: 1, currentRank: 2, change: -1 },
+    { store: 'Shrewsbury', reviews: 6, lastRank: 2, currentRank: 4, change: -2 },
     { store: 'Tyburn', reviews: 0, lastRank: 2, currentRank: 2, change: 0 },
-    { store: 'Wellington', reviews: 17, lastRank: 3, currentRank: 2, change: 1 },
-    { store: 'Wolves Chapel Ash', reviews: 4, lastRank: 1, currentRank: 6, change: -5 },
-    { store: 'Wolves Penn Road', reviews: 8, lastRank: 1, currentRank: 1, change: 0 },
+    { store: 'Wellington', reviews: 35, lastRank: 2, currentRank: 2, change: 0 },
+    { store: 'Wolves Chapel Ash', reviews: 10, lastRank: 6, currentRank: 1, change: 5 },
+    { store: 'Wolves Penn Road', reviews: 3, lastRank: 1, currentRank: 1, change: 0 },
 ];
 
-// TW App Signups - Restructured for monthly progress visualisation
+// TW App Signups - Restructured for monthly progress visualisation (Bristol Oct updated)
 const appAdoptionProgressData = [
-    { store: 'Bristol', cluster: 'S1-1-B', July: 36.70, August: 50.60, September: 53.40 },
-    { store: 'Gloucester', cluster: 'S1-1-G', July: 22.00, August: 29.90, September: 40.20 },
-    { store: 'Nottingham', cluster: 'S1-1-N', July: 16.90, August: 19.50, September: 19.20 },
-    { store: 'Rugby', cluster: 'S1-1-R', July: 22.70, August: 33.20, September: 36.50 },
-    { store: 'Barnstaple', cluster: 'S1-2-BE', July: 11.10, August: 17.10, September: 27.50 },
-    { store: 'Exeter', cluster: 'S1-2-BE', July: 11.20, August: 17.60, September: 27.70 },
-    { store: 'Birmingham', cluster: 'S1-2-BT', July: 17.50, August: 19.30, September: 23.50 },
-    { store: 'Tyburn', cluster: 'S1-2-BT', July: 19.20, August: 21.90, September: 23.70 },
-    { store: 'Wolves Chapel Ash', cluster: 'S1-2-CP', July: 18.10, August: 29.90, September: 41.50 },
-    { store: 'Wolves Penn Road', cluster: 'S1-2-CP', July: 21.30, August: 32.00, September: 38.20 },
-    { store: 'Bridgend', cluster: 'S1-3-BMR', July: 17.50, August: 28.70, September: 33.90 },
-    // Merthyr is used here
-    { store: 'Merthyr', cluster: 'S1-3-BMR', July: 16.80, August: 33.00, September: 47.60 }, 
-    { store: 'Rumney', cluster: 'S1-3-BMR', July: 9.60, August: 22.80, September: 29.20 },
-    { store: 'Madeley', cluster: 'S1-3-MSW', July: 20.80, August: 45.60, September: 58.10 },
-    { store: 'Shrewsbury', cluster: 'S1-3-MSW', July: 13.30, August: 32.10, September: 30.50 },
-    { store: 'Wellington', cluster: 'S1-3-MSW', July: 20.20, August: 33.50, September: 46.00 },
+    { store: 'Bristol', cluster: 'S1-1-B', July: 36.70, August: 50.60, September: 53.40, October: 65.40 }, // Updated Bristol Oct value
+    { store: 'Gloucester', cluster: 'S1-1-G', July: 22.00, August: 29.90, September: 40.20, October: 59.10 },
+    { store: 'Nottingham', cluster: 'S1-1-N', July: 16.90, August: 19.50, September: 19.20, October: 49.50 },
+    { store: 'Rugby', cluster: 'S1-1-R', July: 22.70, August: 33.20, September: 36.50, October: 51.60 },
+    { store: 'Barnstaple', cluster: 'S1-2-BE', July: 11.10, August: 17.10, September: 27.50, October: 43.20 },
+    { store: 'Exeter', cluster: 'S1-2-BE', July: 11.20, August: 17.60, September: 27.70, October: 42.10 },
+    { store: 'Birmingham', cluster: 'S1-2-BT', July: 17.50, August: 19.30, September: 23.50, October: 42.70 },
+    { store: 'Tyburn', cluster: 'S1-2-BT', July: 19.20, August: 21.90, September: 23.70, October: 33.50 },
+    { store: 'Wolves Chapel Ash', cluster: 'S1-2-CP', July: 18.10, August: 29.90, September: 41.50, October: 54.90 },
+    { store: 'Wolves Penn Road', cluster: 'S1-2-CP', July: 21.30, August: 32.00, September: 38.20, October: 54.50 },
+    { store: 'Bridgend', cluster: 'S1-3-BMR', July: 17.50, August: 28.70, September: 33.90, October: 48.50 },
+    { store: 'Merthyr', cluster: 'S1-3-BMR', July: 16.80, August: 33.00, September: 47.60, October: 59.60 }, 
+    { store: 'Rumney', cluster: 'S1-3-BMR', July: 9.60, August: 22.80, September: 29.20, October: 35.30 },
+    { store: 'Madeley', cluster: 'S1-3-MSW', July: 20.80, August: 45.60, September: 58.10, October: 76.00 },
+    { store: 'Shrewsbury', cluster: 'S1-3-MSW', July: 13.30, August: 32.10, September: 30.50, October: 49.00 },
+    { store: 'Wellington', cluster: 'S1-3-MSW', July: 20.20, August: 33.50, September: 46.00, October: 65.50 },
 ];
 
-// Data for September App Adoption Snapshot (derived from monthly data)
-const twAppSignupSeptData = appAdoptionProgressData.map(d => ({
+// Data for October App Adoption Snapshot (derived from monthly data)
+const twAppSignupOctData = appAdoptionProgressData.map(d => ({
     store: d.store,
     cluster: d.cluster,
-    percentHaveApp: d.September,
+    percentHaveApp: d.October,
 }));
 
-// Area Average for September
-const septemberAreaAverage = 37.9;
+// Area Average for App Adoption 
+const octoberAreaAverage = 50.2; 
 
-// NEW DATA: October Targets - UPDATED WITH USER'S LATEST FIGURES
-const octoberTargetsData = [
-    { store: 'Bristol', cluster: 'S1-1-B', monthTarget: '£23,600.00', clusterSalesTarget: '£23,600.00', ncTarget: 367, clusterNCTarget: 367 },
-    { store: 'Gloucester', cluster: 'S1-1-G', monthTarget: '£15,500.00', clusterSalesTarget: '£15,500.00', ncTarget: 63, clusterNCTarget: 63 },
-    { store: 'Nottingham', cluster: 'S1-1-N', monthTarget: '£15,100.00', clusterSalesTarget: '£15,100.00', ncTarget: 134, clusterNCTarget: 134 },
-    { store: 'Rugby', cluster: 'S1-1-R', monthTarget: '£10,400.00', clusterSalesTarget: '£10,400.00', ncTarget: 69, clusterNCTarget: 69 },
-    { store: 'Barnstaple', cluster: 'S1-2-BE', monthTarget: '£16,200.00', clusterSalesTarget: '£44,000.00', ncTarget: 51, clusterNCTarget: 279 },
-    { store: 'Exeter', cluster: 'S1-2-BE', monthTarget: '£27,800.00', clusterSalesTarget: '£44,000.00', ncTarget: 228, clusterNCTarget: 279 },
-    { store: 'Birmingham', cluster: 'S1-2-BT', monthTarget: '£11,100.00', clusterSalesTarget: '£22,000.00', ncTarget: 71, clusterNCTarget: 102 },
-    { store: 'Tyburn', cluster: 'S1-2-BT', monthTarget: '£10,900.00', clusterSalesTarget: '£22,000.00', ncTarget: 31, clusterNCTarget: 102 },
-    { store: 'Wolves Chapel Ash', cluster: 'S1-2-CP', monthTarget: '£10,700.00', clusterSalesTarget: '£19,200.00', ncTarget: 34, clusterNCTarget: 87 },
-    { store: 'Wolves Penn Road', cluster: 'S1-2-CP', monthTarget: '£8,500.00', clusterSalesTarget: '£19,200.00', ncTarget: 53, clusterNCTarget: 87 },
-    { store: 'Bridgend', cluster: 'S1-3-BMR', monthTarget: '£15,100.00', clusterSalesTarget: '£56,500.00', ncTarget: 98, clusterNCTarget: 287 },
-    { store: 'Merthyr', cluster: 'S1-3-BMR', monthTarget: '£16,600.00', clusterSalesTarget: '£56,500.00', ncTarget: 111, clusterNCTarget: 287 },
-    { store: 'Rumney', cluster: 'S1-3-BMR', monthTarget: '£24,800.00', clusterSalesTarget: '£56,500.00', ncTarget: 78, clusterNCTarget: 287 },
-    { store: 'Madeley', cluster: 'S1-3-MSW', monthTarget: '£22,600.00', clusterSalesTarget: '£48,500.00', ncTarget: 166, clusterNCTarget: 383 },
-    { store: 'Shrewsbury', cluster: 'S1-3-MSW', monthTarget: '£15,400.00', clusterSalesTarget: '£48,500.00', ncTarget: 125, clusterNCTarget: 383 },
-    { store: 'Wellington', cluster: 'S1-3-MSW', monthTarget: '£10,500.00', clusterSalesTarget: '£48,500.00', ncTarget: 92, clusterNCTarget: 383 },
+// NEW NC APP ADOPTION DATA (REPLACED)
+const ncAppAdoptionData = [
+    { store: 'Bristol', cluster: 'S1-1-B', ncAppAdoption: 47.20, missedOpportunity: 124 },
+    { store: 'Gloucester', cluster: 'S1-1-G', ncAppAdoption: 79.30, missedOpportunity: 6 },
+    { store: 'Nottingham', cluster: 'S1-1-N', ncAppAdoption: 28.60, missedOpportunity: 40 },
+    { store: 'Rugby', cluster: 'S1-1-R', ncAppAdoption: 55.90, missedOpportunity: 15 },
+    { store: 'Barnstaple', cluster: 'S1-2-BE', ncAppAdoption: 63.60, missedOpportunity: 8 },
+    { store: 'Exeter', cluster: 'S1-2-BE', ncAppAdoption: 34.00, missedOpportunity: 128 },
+    { store: 'Birmingham', cluster: 'S1-2-BT', ncAppAdoption: 40.90, missedOpportunity: 26 },
+    { store: 'Tyburn', cluster: 'S1-2-BT', ncAppAdoption: 21.10, missedOpportunity: 15 },
+    { store: 'Wolves Chapel Ash', cluster: 'S1-2-CP', ncAppAdoption: 60.00, missedOpportunity: 6 },
+    { store: 'Wolves Penn Road', cluster: 'S1-2-CP', ncAppAdoption: 70.60, missedOpportunity: 5 },
+    { store: 'Bridgend', cluster: 'S1-3-BMR', ncAppAdoption: 40.00, missedOpportunity: 27 },
+    { store: 'Merthyr', cluster: 'S1-3-BMR', ncAppAdoption: 34.00, missedOpportunity: 35 },
+    { store: 'Rumney', cluster: 'S1-3-BMR', ncAppAdoption: 28.60, missedOpportunity: 35 },
+    { store: 'Madeley', cluster: 'S1-3-MSW', ncAppAdoption: 54.10, missedOpportunity: 34 },
+    { store: 'Shrewsbury', cluster: 'S1-3-MSW', ncAppAdoption: 34.90, missedOpportunity: 56 },
+    { store: 'Wellington', cluster: 'S1-3-MSW', ncAppAdoption: 67.40, missedOpportunity: 14 },
 ];
 
-// QUIZ DATA based on the generated report content
+// Area Average NC App Adoption %
+const averageNcAppAdoption = ncAppAdoptionData.reduce((sum, d) => sum + d.ncAppAdoption, 0) / ncAppAdoptionData.length;
+
+// NC App Adoption Target (New Constant)
+const NC_APP_ADOPTION_TARGET = 80;
+
+
+// NEW DATA: November Targets - FULL REPLACEMENT with new values
+const novemberTargetsData = [
+    { store: 'Bristol', cluster: 'S1-1-B', monthTarget: '£23,700.00', clusterSalesTarget: '£23,700.00', ncTarget: 378, clusterNCTarget: 378 },
+    { store: 'Gloucester', cluster: 'S1-1-G', monthTarget: '£15,600.00', clusterSalesTarget: '£15,600.00', ncTarget: 56, clusterNCTarget: 56 },
+    { store: 'Nottingham', cluster: 'S1-1-N', monthTarget: '£15,200.00', clusterSalesTarget: '£15,200.00', ncTarget: 123, clusterNCTarget: 123 },
+    { store: 'Rugby', cluster: 'S1-1-R', monthTarget: '£10,500.00', clusterSalesTarget: '£10,500.00', ncTarget: 62, clusterNCTarget: 62 },
+    { store: 'Barnstaple', cluster: 'S1-2-BE', monthTarget: '£16,300.00', clusterSalesTarget: '£44,300.00', ncTarget: 68, clusterNCTarget: 302 },
+    { store: 'Exeter', cluster: 'S1-2-BE', monthTarget: '£28,000.00', clusterSalesTarget: '£44,300.00', ncTarget: 234, clusterNCTarget: 302 },
+    { store: 'Birmingham', cluster: 'S1-2-BT', monthTarget: '£11,200.00', clusterSalesTarget: '£22,200.00', ncTarget: 77, clusterNCTarget: 107 },
+    { store: 'Tyburn', cluster: 'S1-2-BT', monthTarget: '£11,000.00', clusterSalesTarget: '£22,200.00', ncTarget: 30, clusterNCTarget: 107 },
+    { store: 'Wolves Chapel Ash', cluster: 'S1-2-CP', monthTarget: '£10,800.00', clusterSalesTarget: '£19,400.00', ncTarget: 39, clusterNCTarget: 84 },
+    { store: 'Wolves Penn Road', cluster: 'S1-2-CP', monthTarget: '£8,600.00', clusterSalesTarget: '£19,400.00', ncTarget: 45, clusterNCTarget: 84 },
+    { store: 'Bridgend', cluster: 'S1-3-BMR', monthTarget: '£15,300.00', clusterSalesTarget: '£57,000.00', ncTarget: 75, clusterNCTarget: 252 },
+    { store: 'Merthyr', cluster: 'S1-3-BMR', monthTarget: '£16,700.00', clusterSalesTarget: '£57,000.00', ncTarget: 100, clusterNCTarget: 252 },
+    { store: 'Rumney', cluster: 'S1-3-BMR', monthTarget: '£25,000.00', clusterSalesTarget: '£57,000.00', ncTarget: 77, clusterNCTarget: 252 },
+    { store: 'Madeley', cluster: 'S1-3-MSW', monthTarget: '£22,700.00', clusterSalesTarget: '£48,900.00', ncTarget: 158, clusterNCTarget: 376 },
+    { store: 'Shrewsbury', cluster: 'S1-3-MSW', monthTarget: '£15,600.00', clusterSalesTarget: '£48,900.00', ncTarget: 125, clusterNCTarget: 376 },
+    { store: 'Wellington', cluster: 'S1-3-MSW', monthTarget: '£10,600.00', clusterSalesTarget: '£48,900.00', ncTarget: 93, clusterNCTarget: 376 },
+];
+
+// QUIZ DATA REFRESHED
 const QUIZ_DATA = [
     {
-        question: "Based on the Battle of the Areas (Southern Region) table, which region is currently leading in the key sustainable growth metric of RET % (Retention)?",
+        question: "Based on the Battle of the Areas table, which region secured the strongest RET % (Retention) in October?",
         options: ["South 1", "South 2", "South 3"],
         correctAnswer: "South 2",
     },
     {
-        question: "According to the App Adoption Snapshot chart, which store recorded the highest App Adoption Rate in September?",
-        options: ["Bristol", "Madeley", "Wolves Chapel Ash"],
-        correctAnswer: "Madeley",
+        question: "Based on the New Customer App Adoption & Missed Opportunity chart, which store had the highest raw Missed Opportunity count in October?",
+        options: ["Bristol", "Exeter", "Shrewsbury"],
+        correctAnswer: "Exeter", // 128
+    },
+    {
+        question: "Based on the New Customer App Adoption & Missed Opportunity chart, which store achieved the highest NC App Adoption % in October?",
+        options: ["Madeley", "Gloucester", "Wolves Penn Road"],
+        correctAnswer: "Gloucester", // 79.30%
+    },
+    {
+        question: "Looking at the Google Local Ranking Performance table, which store achieved the largest positive improvement in rank position (largest 'change' figure)?",
+        options: ["Bristol (+2)", "Rugby (+2)", "Wolves Chapel Ash (+5)"],
+        correctAnswer: "Wolves Chapel Ash (+5)", 
     },
     {
         question: "The narrative on the Retention Strategy suggests that the primary focus to improve retention should be:",
@@ -454,16 +493,6 @@ const QUIZ_DATA = [
             "Increasing product discounts across all transactions.",
         ],
         correctAnswer: "Providing layered, comprehensive value through multiple relevant incentives.",
-    },
-    {
-        question: "The overall Area Average for App Adoption in September was closest to which figure?",
-        options: ["25.5%", "37.9%", "50.0%"],
-        correctAnswer: "37.9%",
-    },
-    {
-        question: "According to the ACB Trends chart, which cluster maintained the highest total Active Customer Base (ACB) in September?",
-        options: ["S1-1-B", "S1-2-BE", "S1-3-MSW"],
-        correctAnswer: "S1-3-MSW",
     },
 ];
 
@@ -488,9 +517,11 @@ const App = () => {
 
     // Colours and constants (UK spelling for consistency)
     const barColors = ['#4A90E2', '#8BC34A', '#FFC107', '#E91E63', '#9C27B0', '#00BCD4', '#FF9800', '#795548', '#607D8B'];
-    const lineColors = ['#0077B6', '#FCA311', '#5B5F97']; // Dark Blue, Orange, Muted Purple
+    const lineColors = ['#0077B6', '#FCA311', '#5B5F97', '#E91E63']; // Dark Blue, Orange, Muted Purple, Pink/Red (for Oct)
     const appBarColor = '#8BC34A'; // Green for "App Adoption" bars
     const averageLineColor = '#E91E63'; // Pink/Red for Average Reference Line
+    const ncAppAdoptionColor = '#10B981'; // Green for NC App Adoption %
+    const missedOpportunityColor = '#EF4444'; // Red for Missed Opportunity Count
 
 
     // --- QUIZ LOGIC FUNCTIONS ---
@@ -553,7 +584,7 @@ const App = () => {
     // --- Data Mapping & Preparation (Placed inside App component for functional updates) ---
 
     // 1. Build a map for easy store-to-cluster lookup (handling naming discrepancies)
-    const storeClusterMap = octoberTargetsData.reduce((acc, item) => {
+    const storeClusterMap = novemberTargetsData.reduce((acc, item) => {
         acc[item.store] = item.cluster;
         return acc;
     }, {});
@@ -567,6 +598,7 @@ const App = () => {
     }));
     
     // 3. Filter Audit data for charts
+    // These remain even though the component isn't rendered, in case you need them later.
     const filteredMwwAuditData = selectedCluster === 'All'
         ? q3MwwAuditData
         : q3MwwAuditData.filter(d => d.cluster === selectedCluster);
@@ -597,58 +629,62 @@ const App = () => {
         ? q3GoogleReviewsDataEnriched
         : q3GoogleReviewsDataEnriched.filter(d => d.cluster === selectedCluster);
 
-    const filteredTwAppSignupSeptData = selectedCluster === 'All'
-        ? twAppSignupSeptData
-        : twAppSignupSeptData.filter(d => d.cluster === selectedCluster);
+    const filteredTwAppSignupOctData = selectedCluster === 'All'
+        ? twAppSignupOctData
+        : twAppSignupOctData.filter(d => d.cluster === selectedCluster);
 
     const filteredAppAdoptionProgressData = selectedCluster === 'All'
         ? appAdoptionProgressData
         : appAdoptionProgressData.filter(d => d.cluster === selectedCluster);
+        
+    const filteredNcAppAdoptionData = selectedCluster === 'All'
+        ? ncAppAdoptionData
+        : ncAppAdoptionData.filter(d => d.cluster === selectedCluster);
 
-    // 3. Combine all relevant data for deeper analysis blocks (e.g. Trade-in Correlation)
-    const combinedData = q3SalesNcData.map(q3 => {
-        const retention = q2RetentionData.find(r => r.cluster === q3.cluster);
-        const acb = q2AcbData.find(a => a.cluster === q3.cluster);
-        const additional = newQ3KeyMetricsWithRetention.find(ad => ad.cluster === q3.cluster);
-        return { ...q3, ...retention, ...acb, ...additional };
-    });
+    // 3. Combine all relevant data for deeper analysis blocks (e.g. Highlights)
+    const combinedData = q3SalesNcData.map(q3 => {
+        const retention = q2RetentionData.find(r => r.cluster === q3.cluster);
+        const acb = q2AcbData.find(a => a.cluster === q3.cluster);
+        const additional = newQ3KeyMetricsWithRetention.find(ad => ad.cluster === q3.cluster);
+        return { ...q3, ...retention, ...acb, ...additional };
+    });
 
     // Determine the focus data for the Trade-in box
     const tradeInFocusData = selectedCluster === 'All'
         ? combinedData.sort((a, b) => b.tradeInVsKitSales - a.tradeInVsKitSales).slice(0, 2)
         : combinedData.filter(d => d.cluster === selectedCluster); // Show only the selected cluster
 
-  // Calculate September highlights with criteria and limit to 5
-  const septemberHighlights = combinedData
-    .filter(d =>
-      d.salesVsTargetSep > 100 ||
-      d.ncVsTargetSep > 100 ||
-      d.septemberRetention > 40 ||
-      d.vltz > 70 ||
-      d.wrc > 70 ||
-      d.unregisteredTransaction < 5
-    )
-    .sort((a, b) => {
-      // Scoring logic for highlights (using September data)
-      let aScore = 0;
-      if (a.salesVsTargetSep > 100) aScore += (a.salesVsTargetSep - 100);
-      if (a.ncVsTargetSep > 100) aScore += (a.ncVsTargetSep - 100);
-      if (a.septemberRetention > 40) aScore += (a.septemberRetention - 40);
-      if (a.vltz > 70) aScore += (a.vltz - 70);
-      if (a.wrc > 70) aScore += (a.wrc - 70);
-      if (a.unregisteredTransaction < 5) aScore += (5 - a.unregisteredTransaction) * 10;
+ // Calculate October highlights with criteria and limit to 5
+  const octoberHighlights = combinedData
+    .filter(d =>
+      d.salesVsTargetOct > 100 || 
+      d.ncVsTargetOct > 100 || 
+      d.octoberRetention > 40 || 
+      d.vltz > 70 ||
+      d.wrc > 70 ||
+      d.unregisteredTransaction < 5
+    )
+    .sort((a, b) => {
+      // Scoring logic for highlights (using October data)
+      let aScore = 0;
+      if (a.salesVsTargetOct > 100) aScore += (a.salesVsTargetOct - 100);
+      if (a.ncVsTargetOct > 100) aScore += (a.ncVsTargetOct - 100);
+      if (a.octoberRetention > 40) aScore += (a.octoberRetention - 40);
+      if (a.vltz > 70) aScore += (a.vltz - 70);
+      if (a.wrc > 70) aScore += (a.wrc - 70);
+      if (a.unregisteredTransaction < 5) aScore += (5 - a.unregisteredTransaction) * 10;
 
-      let bScore = 0;
-      if (b.salesVsTargetSep > 100) bScore += (b.salesVsTargetSep - 100);
-      if (b.ncVsTargetSep > 100) bScore += (b.ncVsTargetSep - 100);
-      if (b.septemberRetention > 40) bScore += (b.septemberRetention - 40);
-      if (b.vltz > 70) bScore += (b.vltz - 70);
-      if (b.wrc > 70) bScore += (b.wrc - 70);
-      if (b.unregisteredTransaction < 5) bScore += (5 - b.unregisteredTransaction) * 10;
+      let bScore = 0;
+      if (b.salesVsTargetOct > 100) bScore += (b.salesVsTargetOct - 100);
+      if (b.ncVsTargetOct > 100) bScore += (b.ncVsTargetOct - 100);
+      if (b.octoberRetention > 40) bScore += (b.octoberRetention - 40);
+      if (b.vltz > 70) bScore += (b.vltz - 70);
+      if (b.wrc > 70) bScore += (b.wrc - 70);
+      if (b.unregisteredTransaction < 5) bScore += (5 - b.unregisteredTransaction) * 10;
 
-      return bScore - aScore;
-    })
-    .slice(0, 5); // Limit to a maximum of 5 shout-outs
+      return bScore - aScore;
+    })
+    .slice(0, 5); // Limit to a maximum of 5 shout-outs
 
 
     // Sort Google Reviews by Current Rank (lowest is best)
@@ -664,8 +700,8 @@ const App = () => {
             return (
                 <div className="text-centre p-6 bg-green-100 rounded-xl shadow-lg border-2 border-green-500">
                     <h3 className="text-3xl font-extrabold text-green-700 mb-4">Knowledge Check Complete!</h3>
-                    <p className="text-xl text-green-800">You've demonstrated a strong understanding of the Q2 performance review.</p>
-                    <p className="text-xl mt-4 font-bold text-green-900">Your October Targets are now visible below!</p>
+                    <p className="text-xl text-green-800">You've demonstrated a strong understanding of the October performance review.</p>
+                    <p className="text-xl mt-4 font-bold text-green-900">Your November Targets are now visible below!</p>
                 </div>
             );
         }
@@ -778,6 +814,49 @@ const App = () => {
             </table>
         </div>
     );
+    
+    // Component for the New Customer App Adoption & Missed Opportunity Chart
+    const NcAppAdoptionChart = () => (
+        <div className="mb-8 p-6 bg-red-50 rounded-lg shadow-sm">
+            <h3 className="text-2xl font-semibold text-red-800 mb-4">New Customer App Adoption vs. Missed Opportunity (October) {selectedCluster !== 'All' ? `— ${selectedCluster}` : ''}</h3>
+            <p className="text-sm text-gray-600 mb-4">
+                This chart shows the **NC App Adoption Rate** (Green Bars, Left Axis) against the raw **Missed Opportunity Count** (Red Line, Right Axis). A high bar is good, but a high red line means high potential missed revenue. Stores should focus on dropping the red line!
+            </p>
+            <ResponsiveContainer width="100%" height={400}>
+                <ComposedChart data={filteredNcAppAdoptionData} margin={{ top: 10, right: 30, left: 20, bottom: 5 }}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#e0e0e0" />
+                    <XAxis dataKey="store" angle={-45} textAnchor="end" height={100} interval={0} tick={{ fill: '#4a5568', fontSize: 12 }} />
+                    <YAxis yAxisId="left" orientation="left" stroke={ncAppAdoptionColor} tickFormatter={(value) => `${value.toFixed(0)}%`} domain={[0, 100]} label={{ value: 'NC App Adoption %', angle: -90, position: 'left', fill: ncAppAdoptionColor }} />
+                    <YAxis yAxisId="right" orientation="right" stroke={missedOpportunityColor} label={{ value: 'Missed Opportunity (NC Count)', angle: 90, position: 'right', fill: missedOpportunityColor }} />
+                    <Tooltip formatter={(value, name, props) => {
+                        if (name.includes('Rate')) return [`${value.toFixed(1)}%`, 'NC App Adoption Rate'];
+                        return [value, 'Missed Opportunity (Count)'];
+                    }} />
+                    <Legend wrapperStyle={{ paddingTop: '20px' }} />
+                    
+                    <Bar yAxisId="left" dataKey="ncAppAdoption" name="NC App Adoption Rate" fill={ncAppAdoptionColor} radius={[8, 8, 0, 0]} />
+                    <Line yAxisId="right" type="monotone" dataKey="missedOpportunity" name="Missed Opportunity" stroke={missedOpportunityColor} strokeWidth={2} dot={{ r: 4 }} activeDot={{ r: 8 }} />
+                    
+                    {/* Reference Line for NC App Adoption TARGET (New) */}
+                    <ReferenceLine 
+                        yAxisId="left" 
+                        y={NC_APP_ADOPTION_TARGET} 
+                        stroke="#FF8C00" 
+                        strokeDasharray="5 5" 
+                        label={{ 
+                            value: `Target: ${NC_APP_ADOPTION_TARGET.toFixed(0)}%`, 
+                            position: 'top', 
+                            fill: '#FF8C00' 
+                        }} 
+                    />
+                    
+                    {/* Reference Line for Area Average NC App Adoption (Existing) */}
+                    <ReferenceLine yAxisId="left" y={averageNcAppAdoption} stroke="#7C3AED" strokeDasharray="3 3" label={{ value: `Area Avg: ${averageNcAppAdoption.toFixed(1)}%`, position: 'bottom', fill: '#7C3AED' }} />
+                </ComposedChart>
+            </ResponsiveContainer>
+        </div>
+    );
+
 
     // Component for the Battle of the Areas Table
     const BattleOfTheAreasTable = () => {
@@ -802,11 +881,20 @@ const App = () => {
                     
                     <div className="mb-6 p-4 bg-indigo-50 rounded-lg">
                         <h4 className="text-xl font-semibold text-indigo-700 mb-2">Overview</h4>
+                        {/* REVISED COMMENTARY - ADDED <br /> TAGS */}
                         <p className="text-lg text-gray-700 leading-relaxed">
-                            Now the dust has firmly settled from the September Battle, South 1 walks out of the arena in a strong position, topping <span className="font-bold">five out of nine metrics</span> for the month. <span className="font-bold">ATV</span> and <span className="font-bold">Retention</span> continue to be the weaker points for the area, and with many of the other KPIs having a photo finish last month, there is no space to rest on their laurels. South 2 is putting up a tremendous defensive effort, leading the way with ATV, Retention, and <span className="font-bold">RAF</span>. Meanwhile, South 3 is running an aggressive digital game, leading in <span className="font-bold">App Adoption</span> rates. With plenty to learn from their comrades & competitors, what can be implemented to pull away from the tie breakers and bolster the weaknesses?
-                        </p>
-                        <p className="text-lg text-gray-700 font-bold mt-4">
-                            The detail below will assist you in unlocking this opportunity.
+                            The Battle of October concludes in a dramatic <strong> stalemate!</strong> Both South 1 and South 2 walk out of the arena topping <strong>five out of the ten key metrics</strong> each this month. It was truly a back-and-forth contest, and with both areas having three distinct areas of focus for November, the deadlock remains unbroken.
+                            <br />
+                            <br />
+                            For South 1, the immediate focus must be on <strong>NC App Adoption</strong> to break this tie and tip the balance back into their favour. Likewise, South 2 has secured the strongest <strong>Retention</strong> figures in the region, providing solid foundations to build upon.
+                            <br />
+                            <br />
+                            Now, while the limelight may be on the dogfight between S1 and S2, let's not underestimate South 3. With plenty of opportunity to attack these metrics and a renewed focus, I expect them to come back fighting this month and could very well cause an upset when the dust settles in November.
+                            <br />
+                            <br />
+                            <span className="text-lg text-gray-700 font-bold mt-4">
+                                Regardless of the size and pace of your store or cluster, your focused performance within these key metrics will be the deciding factor this month.
+                            </span>
                         </p>
                     </div>
 
@@ -834,9 +922,9 @@ const App = () => {
                     <table className="min-w-full divide-y divide-gray-200 border border-gray-300 rounded-lg table-fixed">
                         <thead className="bg-gray-800 text-white">
                             <tr>
-                                <th className="w-1/12 px-2 py-3 text-left text-xs font-medium uppercase tracking-wider sticky left-0 z-10 bg-gray-800 min-w-[100px] rounded-tl-lg">Region</th>
+                                <th className="w-[10%] px-2 py-3 text-left text-xs font-medium uppercase tracking-wider sticky left-0 z-10 bg-gray-800 min-w-[100px] rounded-tl-lg">Region</th>
                                 {Kpis.map(kpi => (
-                                    <th key={kpi.key} className="w-1/12 px-2 py-3 text-centre text-xs font-medium uppercase tracking-wider">
+                                    <th key={kpi.key} className="w-[9%] px-2 py-3 text-centre text-xs font-medium uppercase tracking-wider">
                                         {kpi.label}
                                     </th>
                                 ))}
@@ -845,14 +933,14 @@ const App = () => {
                         <tbody className="bg-white divide-y divide-gray-200">
                             {battleOfTheAreasData.map((item, index) => (
                                 <tr key={item.region} className={item.region === 'South' ? 'bg-indigo-100 font-bold' : (index % 2 === 0 ? 'bg-white' : 'bg-gray-50')}>
-                                    <td className={`w-1/12 px-2 py-3 whitespace-nowrap text-sm font-medium sticky left-0 z-10 ${item.region === 'South' ? 'bg-indigo-100 text-indigo-900' : 'bg-inherit text-gray-900'}`}>{item.region}</td>
+                                    <td className={`w-[10%] px-2 py-3 whitespace-nowrap text-sm font-medium sticky left-0 z-10 ${item.region === 'South' ? 'bg-indigo-100 text-indigo-900' : 'bg-inherit text-gray-900'}`}>{item.region}</td>
                                     {Kpis.map(kpi => {
                                         const rank = item[`${kpi.key}Rank`];
                                         const rankClass = getRankColourClass(rank);
                                         const isRegionalTotal = item.region === 'South';
 
                                         return (
-                                            <td key={kpi.key} className={`w-1/12 px-2 py-3 whitespace-nowrap text-sm text-centre ${isRegionalTotal ? 'bg-indigo-100' : rankClass}`}>
+                                            <td key={kpi.key} className={`w-[9%] px-2 py-3 whitespace-nowrap text-sm text-centre ${isRegionalTotal ? 'bg-indigo-100' : rankClass}`}>
                                                 {getCellContent(item, kpi)}
                                             </td>
                                         );
@@ -871,8 +959,8 @@ const App = () => {
         
         // Filter raw data by cluster
         const filteredRawData = selectedCluster === 'All'
-            ? rawSeptemberKpiData
-            : rawSeptemberKpiData.filter(d => d.cluster === selectedCluster);
+            ? rawOctoberKpiData
+            : rawOctoberKpiData.filter(d => d.cluster === selectedCluster);
 
         // Helper function to determine cell background colour
         const getKpiCellClass = (kpi, value, store) => {
@@ -955,10 +1043,10 @@ const App = () => {
     };
 
 
-    // Component for October Targets Table (Conditionally Rendered)
-    const OctoberTargetsTable = () => (
+    // Component for November Targets Table (Conditionally Rendered)
+    const NovemberTargetsTable = () => ( 
         <div className="overflow-x-auto mt-12 p-6 bg-green-50 rounded-xl shadow-lg border-t-4 border-green-600">
-            <h2 className="text-3xl font-bold text-green-700 mb-6 border-b-2 border-green-200 pb-2 text-centre">Your OCTOBER Targets: Driving Q3 Success</h2>
+            <h2 className="text-3xl font-bold text-green-700 mb-6 border-b-2 border-green-200 pb-2 text-centre">Your NOVEMBER Targets: Driving Q4 Success</h2>
             <table className="min-w-full divide-y divide-gray-200 shadow-md rounded-lg">
                 <thead className="bg-green-600 text-white">
                     <tr>
@@ -971,7 +1059,7 @@ const App = () => {
                     </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
-                    {octoberTargetsData.map((data, index) => (
+                    {novemberTargetsData.map((data, index) => ( 
                         <tr key={data.store} className={index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
                             <td className="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900">{data.store}</td>
                             <td className="px-4 py-3 whitespace-nowrap text-sm text-centre text-gray-600">{data.cluster}</td>
@@ -983,9 +1071,6 @@ const App = () => {
                     ))}
                 </tbody>
             </table>
-            <p className="text-sm text-gray-700 mt-6 text-centre">
-                These targets set the foundation for a successful start to Q3. Focus on collaboration within your clusters to hit both individual and shared goals!
-            </p>
         </div>
     );
     
@@ -1008,7 +1093,7 @@ const App = () => {
 
     // Data for Scatter Plot (NC vs Retention)
     // NOTE: This data pulls from the raw store level KPI data for NC and Retention
-    const storeKpiDataForScatter = rawSeptemberKpiData.map(d => ({
+    const storeKpiDataForScatter = rawOctoberKpiData.map(d => ({
         store: d.store,
         cluster: d.cluster,
         // New Y-Axis: Retention %
@@ -1041,7 +1126,7 @@ const App = () => {
         </div>
     );
 
-    // Consolidated Highlight Data for easier rendering
+    // Consolidated Highlight Data for easier rendering - Using Oct-prefixed variables
     const highlightsData = [
         // --- Q2 Achievements (IsAchievement = true) ---
         { 
@@ -1060,10 +1145,10 @@ const App = () => {
             isAchievement: true 
         },
         
-        // --- September Performance Highlights (IsAchievement = false / Default) ---
+        // --- October Performance Highlights (IsAchievement = false / Default) ---
         { 
             title: "S1-3-MSW Cluster Dominance", 
-            content: `Exceeded Sales Target (${clusterKpiMetrics.find(c => c.cluster === 'S1-3-MSW').salesVsTargetSep.toFixed(2)}%), Exceeded NC Target (${clusterKpiMetrics.find(c => c.cluster === 'S1-3-MSW').ncVsTargetSep.toFixed(2)}%), Achieved High VLTZ (${clusterKpiMetrics.find(c => c.cluster === 'S1-3-MSW').vltz.toFixed(2)}%), and maintained the Lowest Unregistered Transactions (${clusterKpiMetrics.find(c => c.cluster === 'S1-3-MSW').unregisteredTransaction.toFixed(2)}%).`,
+            content: `Exceeded Sales Target (${clusterKpiMetrics.find(c => c.cluster === 'S1-3-MSW').salesVsTargetOct.toFixed(2)}%), Exceeded NC Target (${clusterKpiMetrics.find(c => c.cluster === 'S1-3-MSW').ncVsTargetOct.toFixed(2)}%), Achieved High VLTZ (${clusterKpiMetrics.find(c => c.cluster === 'S1-3-MSW').vltz.toFixed(2)}%), and maintained the Lowest Unregistered Transactions (${clusterKpiMetrics.find(c => c.cluster === 'S1-3-MSW').unregisteredTransaction.toFixed(2)}%).`,
             isAchievement: false
         },
         { 
@@ -1084,12 +1169,12 @@ const App = () => {
     ];
 
     
-  return (
-    <div className="min-h-screen bg-gray-100 p-6 font-inter text-gray-800">
-      <div className="max-w-7xl mx-auto bg-white rounded-xl shadow-lg p-8">
-        
+ return (
+    <div className="min-h-screen bg-gray-100 p-6 font-inter text-gray-800">
+      <div className="max-w-7xl mx-auto bg-white rounded-xl shadow-lg p-8">
+        
         {/* Main Title updated for Q2 Review and Sept Month End */}
-        <h1 className="text-4xl font-extrabold text-centre text-indigo-800 mb-6">Performance Review: Q2 Review & September Month-End Highlights</h1>
+        <h1 className="text-4xl font-extrabold text-centre text-indigo-800 mb-6">Performance Review: October Month-End & Q4 Planning</h1>
         
         {/* INTERACTIVE CLUSTER FILTER */}
         <div className="flex justify-centre items-centre mb-10 p-4 bg-indigo-100 rounded-lg shadow-inner">
@@ -1117,10 +1202,10 @@ const App = () => {
         <section className="mb-12 p-8 bg-gray-100 rounded-xl shadow-inner border-l-4 border-indigo-500">
             <h2 className="text-3xl font-bold text-indigo-700 mb-4">Welcome to Your Performance Dashboard</h2>
             <p className="text-lg text-gray-700 leading-relaxed">
-                This report provides a complete, interactive breakdown of our <strong>Q2 performance, culminating in the critical September Month-End figures</strong>. Whether you are a long-standing manager or new to the team, this dashboard is designed to be your primary coaching and planning tool. Use the filters, tables, and infographics to quickly identify <strong>Areas of Excellence</strong> to celebrate and <strong>Areas for Focus</strong> where a strategic change in approach is needed. The goal is clear: understand our data, apply the insights, and hit the ground running for Q3.
+                This report provides a complete, interactive breakdown of our <strong>Octobers performance and monthly trend data</strong>. Whether you are a long-standing manager or new to the team, this dashboard is designed to be your primary coaching and planning tool. Use the filters, tables, and infographics to quickly identify <strong>Areas of Excellence</strong> to celebrate and <strong>Areas for Focus</strong> where a strategic change in approach is needed.
             </p>
             <p className="text-lg text-gray-700 leading-relaxed mt-4 font-bold">
-                Reviewing the final results for September is a key initial step in gaining an understanding of where your approach may need to differ or be maintained based on the results.
+                Reviewing the final results for October is a key initial step in gaining an understanding of where your approach may need to differ or be maintained based on the results.
             </p>
         </section>
 
@@ -1129,90 +1214,92 @@ const App = () => {
         {selectedCluster === 'All' && <BattleOfTheAreasTable />}
 
 
-        {/* Section 1: September Cluster Performance - Renamed from Q2 */}
-        <section className="mb-12">
-          <h2 className="text-3xl font-bold text-indigo-700 mb-6 border-b-2 border-indigo-200 pb-2">September Cluster Performance Trends</h2>
-          
-          {/* Sales vs Target - NOW LABELLED CORRECTLY */}
-          <div className="mb-8 p-6 bg-blue-50 rounded-lg shadow-sm">
-            <h3 className="text-2xl font-semibold text-blue-800 mb-4">Sales vs Target (September Total) {selectedCluster !== 'All' ? `— ${selectedCluster}` : ''}</h3>
-            <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={filteredData} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#e0e0e0" />
-                <XAxis dataKey="cluster" tick={{ fill: '#4a5568' }} />
-                <YAxis
-                  tickFormatter={(value) => `${value}%`}
-                  tick={{ fill: '#4a5568' }}
-                  ticks={[0, 25, 50, 75, 100, 125, 150]}
-                />
-                {/* TARGET LINE ADDED */}
-                <ReferenceLine y={100} stroke="#E91E63" strokeDasharray="3 3" label={{ value: 'Target', position: 'top', fill: '#E91E63' }} />
-                <Tooltip formatter={(value) => `${value.toFixed(2)}%`} />
-                <Legend />
-                <Bar dataKey="salesVsTarget" name="Sales vs Target %" fill={barColors[0]} radius={[10, 10, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
-            <p className="text-sm text-gray-600 mt-4">This chart displays the percentage of sales achieved against the target for each cluster in September. The red line at 100% represents the target achievement line.</p>
-          </div>
-
-          {/* NC vs Target - NOW LABELLED CORRECTLY */}
-          <div className="mb-8 p-6 bg-green-50 rounded-lg shadow-sm">
-            <h3 className="text-2xl font-semibold text-green-800 mb-4">New Customers (NC) vs Target (September Total) {selectedCluster !== 'All' ? `— ${selectedCluster}` : ''}</h3>
-            <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={filteredData} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#e0e0e0" />
-                <XAxis dataKey="cluster" tick={{ fill: '#4a5568' }} />
-                <YAxis
-                  tickFormatter={(value) => `${value}%`}
-                  tick={{ fill: '#4a5568' }}
-                  ticks={[0, 25, 50, 75, 100, 125, 150]}
-                />
-                {/* TARGET LINE ADDED */}
-                <ReferenceLine y={100} stroke="#E91E63" strokeDasharray="3 3" label={{ value: 'Target', position: 'top', fill: '#E91E63' }} />
-                <Tooltip formatter={(value) => `${value.toFixed(2)}%`} />
-                <Legend />
-                <Bar dataKey="ncVsTarget" name="NC vs Target %" fill={barColors[1]} radius={[10, 10, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
-            <p className="text-sm text-gray-600 mt-4">This chart illustrates the percentage of New Customer (NC) acquisition achieved against target for each cluster in September. The target line is set at 100%.</p>
-          </div>
+        {/* Section 1: October Cluster Performance */}
+        <section className="mb-12">
+            <h2 className="text-3xl font-bold text-indigo-700 mb-6 border-b-2 border-indigo-200 pb-2">October Cluster Performance Trends</h2>
             
-            {/* ACB Trends (Q2) */}
-          <div className="mb-8 p-6 bg-purple-50 rounded-lg shadow-sm">
-            <h3 className="text-2xl font-semibold text-purple-800 mb-4">Active Customer Base (ACB) Trends (July - September) {selectedCluster !== 'All' ? `— ${selectedCluster}` : ''}</h3>
-            <ResponsiveContainer width="100%" height={300}>
-              <LineChart data={filteredAcbData} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#e0e0e0" />
-                <XAxis dataKey="cluster" tick={{ fill: '#4a5568' }} />
-                <YAxis tick={{ fill: '#4a5568' }} />
-                <Tooltip />
-                <Legend />
-                <Line type="monotone" dataKey="julyACB" stroke="#dc3545" name="July ACB" strokeWidth={2} dot={{ r: 4 }} activeDot={{ r: 8 }} />
-                <Line type="monotone" dataKey="augustACB" stroke="#ffc107" name="August ACB" strokeWidth={2} dot={{ r: 4 }} activeDot={{ r: 8 }} />
-                <Line type="monotone" dataKey="septemberACB" stroke="#6f42c1" name="September ACB" strokeWidth={2} dot={{ r: 4 }} activeDot={{ r: 8 }} />
-              </LineChart>
-            </ResponsiveContainer>
-            <p className="text-sm text-gray-600 mt-4">This line chart tracks the combined total number of Active Customer Base (ACB) for each cluster across the full Q2 period (July to September).</p>
-          </div>
+            {/* Sales vs Target - NOW LABELLED CORRECTLY */}
+            <div className="mb-8 p-6 bg-blue-50 rounded-lg shadow-sm">
+              <h3 className="text-2xl font-semibold text-blue-800 mb-4">Sales vs Target (October Total) {selectedCluster !== 'All' ? `— ${selectedCluster}` : ''}</h3>
+              <ResponsiveContainer width="100%" height={300}>
+                <BarChart data={filteredData} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#e0e0e0" />
+                  <XAxis dataKey="cluster" tick={{ fill: '#4a5568' }} />
+                  <YAxis
+                    tickFormatter={(value) => `${value}%`}
+                    tick={{ fill: '#4a5568' }}
+                    ticks={[0, 25, 50, 75, 100, 125, 150]}
+                  />
+                  {/* TARGET LINE ADDED */}
+                  <ReferenceLine y={100} stroke="#E91E63" strokeDasharray="3 3" label={{ value: 'Target', position: 'top', fill: '#E91E63' }} />
+                  <Tooltip formatter={(value) => `${value.toFixed(2)}%`} />
+                  <Legend />
+                  <Bar dataKey="salesVsTarget" name="Sales vs Target %" fill={barColors[0]} radius={[10, 10, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+              <p className="text-sm text-gray-600 mt-4">This chart displays the percentage of sales achieved against the target for each cluster in October. The red line at 100% represents the target achievement line.</p>
+            </div>
 
-          {/* Retention Trends (Q2) */}
-          <div className="mb-8 p-6 bg-red-50 rounded-lg shadow-sm">
-            <h3 className="text-2xl font-semibold text-red-800 mb-4">Retention Trends (July - September) {selectedCluster !== 'All' ? `— ${selectedCluster}` : ''}</h3>
-            <ResponsiveContainer width="100%" height={300}>
-              <LineChart data={filteredRetentionData} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#e0e0e0" />
-                <XAxis dataKey="cluster" tick={{ fill: '#4a5568' }} />
-                <YAxis tickFormatter={(value) => `${value}%`} domain={[0, 60]} tick={{ fill: '#4a5568' }} />
-                <Tooltip formatter={(value) => `${value.toFixed(2)}%`} />
-                <Legend />
-                <Line type="monotone" dataKey="julyRetention" stroke="#dc3545" name="July Retention" strokeWidth={2} dot={{ r: 4 }} activeDot={{ r: 8 }} />
-                <Line type="monotone" dataKey="augustRetention" stroke="#ffc107" name="August Retention" strokeWidth={2} dot={{ r: 4 }} activeDot={{ r: 8 }} />
-                <Line type="monotone" dataKey="septemberRetention" stroke="#6f42c1" name="September Retention" strokeWidth={2} dot={{ r: 4 }} activeDot={{ r: 8 }} />
-              </LineChart>
-            </ResponsiveContainer>
-            <p className="text-sm text-gray-600 mt-4">This chart tracks the average customer retention percentage across clusters for each month of Q2.</p>
-          </div>
-        </section>
+            {/* NC vs Target - NOW LABELLED CORRECTLY */}
+            <div className="mb-8 p-6 bg-green-50 rounded-lg shadow-sm">
+              <h3 className="text-2xl font-semibold text-green-800 mb-4">New Customers (NC) vs Target (October Total) {selectedCluster !== 'All' ? `— ${selectedCluster}` : ''}</h3>
+              <ResponsiveContainer width="100%" height={300}>
+                <BarChart data={filteredData} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#e0e0e0" />
+                  <XAxis dataKey="cluster" tick={{ fill: '#4a5568' }} />
+                  <YAxis
+                    tickFormatter={(value) => `${value}%`}
+                    tick={{ fill: '#4a5568' }}
+                    ticks={[0, 25, 50, 75, 100, 125, 150]}
+                  />
+                  {/* TARGET LINE ADDED */}
+                  <ReferenceLine y={100} stroke="#E91E63" strokeDasharray="3 3" label={{ value: 'Target', position: 'top', fill: '#E91E63' }} />
+                  <Tooltip formatter={(value) => `${value.toFixed(2)}%`} />
+                  <Legend />
+                  <Bar dataKey="ncVsTarget" name="NC vs Target %" fill={barColors[1]} radius={[10, 10, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+              <p className="text-sm text-gray-600 mt-4">This chart illustrates the percentage of New Customer (NC) acquisition achieved against target for each cluster in October. The target line is set at 100%.</p>
+            </div>
+            
+            {/* ACB Trends (Q2 + Oct) */}
+            <div className="mb-8 p-6 bg-purple-50 rounded-lg shadow-sm">
+              <h3 className="text-2xl font-semibold text-purple-800 mb-4">Active Customer Base (ACB) Trends (July - October) {selectedCluster !== 'All' ? `— ${selectedCluster}` : ''}</h3>
+              <ResponsiveContainer width="100%" height={300}>
+                <LineChart data={filteredAcbData} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#e0e0e0" />
+                  <XAxis dataKey="cluster" tick={{ fill: '#4a5568' }} />
+                  <YAxis tick={{ fill: '#4a5568' }} />
+                  <Tooltip />
+                  <Legend />
+                  <Line type="monotone" dataKey="julyACB" stroke="#0077B6" name="July ACB" strokeWidth={2} dot={{ r: 4 }} activeDot={{ r: 8 }} />
+                  <Line type="monotone" dataKey="augustACB" stroke="#FCA311" name="August ACB" strokeWidth={2} dot={{ r: 4 }} activeDot={{ r: 8 }} />
+                  <Line type="monotone" dataKey="septemberACB" stroke="#5B5F97" name="September ACB" strokeWidth={2} dot={{ r: 4 }} activeDot={{ r: 8 }} />
+                  <Line type="monotone" dataKey="octoberACB" stroke="#E91E63" name="October ACB" strokeWidth={3} dot={{ r: 5 }} activeDot={{ r: 8 }} />
+                </LineChart>
+              </ResponsiveContainer>
+              <p className="text-sm text-gray-600 mt-4">This line chart tracks the combined total number of Active Customer Base (ACB) for each cluster across the months, including the latest October results.</p>
+            </div>
+
+            {/* Retention Trends (Q2 + Oct) */}
+            <div className="mb-8 p-6 bg-red-50 rounded-lg shadow-sm">
+              <h3 className="text-2xl font-semibold text-red-800 mb-4">Retention Trends (July - October) {selectedCluster !== 'All' ? `— ${selectedCluster}` : ''}</h3>
+              <ResponsiveContainer width="100%" height={300}>
+                <LineChart data={filteredRetentionData} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#e0e0e0" />
+                  <XAxis dataKey="cluster" tick={{ fill: '#4a5568' }} />
+                  <YAxis tickFormatter={(value) => `${value}%`} domain={[0, 60]} tick={{ fill: '#4a5568' }} />
+                  <Tooltip formatter={(value) => `${value.toFixed(2)}%`} />
+                  <Legend />
+                  <Line type="monotone" dataKey="julyRetention" stroke="#0077B6" name="July Retention" strokeWidth={2} dot={{ r: 4 }} activeDot={{ r: 8 }} />
+                  <Line type="monotone" dataKey="augustRetention" stroke="#FCA311" name="August Retention" strokeWidth={2} dot={{ r: 4 }} activeDot={{ r: 8 }} />
+                  <Line type="monotone" dataKey="septemberRetention" stroke="#5B5F97" name="September Retention" strokeWidth={2} dot={{ r: 4 }} activeDot={{ r: 8 }} />
+                  <Line type="monotone" dataKey="octoberRetention" stroke="#E91E63" name="October Retention" strokeWidth={3} dot={{ r: 5 }} activeDot={{ r: 8 }} />
+                </LineChart>
+              </ResponsiveContainer>
+              <p className="text-sm text-gray-600 mt-4">This chart tracks the average customer retention percentage across clusters for each month of Q2 and October.</p>
+            </div>
+        </section>
 
 
         {/* ========================================================= */}
@@ -1220,102 +1307,42 @@ const App = () => {
         {/* ========================================================= */}
 
 
-        {/* Section 2: September Highlights - RENAMED AND CONTENT ADJUSTED */}
-        <section className="mb-12 p-8 bg-yellow-50 rounded-xl shadow-lg">
-          <h2 className="text-3xl font-bold text-yellow-800 mb-6 border-b-2 border-yellow-300 pb-2">Q2 Achievements and September Highlights</h2>
-          {selectedCluster === 'All' ? (
-                // All Clusters View
-                <>
-                    {/* 1. Q2 Achievements Header */}
-                    <h4 className="text-xl font-bold text-yellow-700 mb-3 border-b border-yellow-200 pb-1">Q2 Audit & LFL Growth Achievements:</h4>
-                    
-                    {/* H1 MWW Audit Excellence */}
-                    <HighlightCard 
-                        title="H1 MWW Audit Excellence" 
-                        content="Huge credit to Rugby, Wolves Penn Road, and Wellington for achieving a perfect 100% score in their Mr Wicked Way (MWW) Audits." 
-                        isAchievement={true}
-                    />
-                    
-                    {/* H1 Compliance Leader */}
-                    <HighlightCard 
-                        title="H1 Compliance Leader" 
-                        content="Shout-out to Tyburn for delivering the highest Compliance Audit score in the area (99.50%)." 
-                        isAchievement={true}
-                    />
-                    
-                    {/* Sustainable LFL Growth */}
-                    <HighlightCard 
-                        title="Sustainable LFL Growth" 
-                        content="The Telford cluster (S1-3-MSW: Madeley, Shrewsbury, Wellington) leads the area in Like-for-Like (LFL) growth, with all stores in the cluster seeing positive growth in September." 
-                        isAchievement={true}
-                    />
+        {/* Section 2: October Highlights (HIDDEN) */}
+        {/* {selectedCluster === 'All' && (
+            <section className="mb-12 p-8 bg-yellow-50 rounded-xl shadow-lg">
+                <h2 className="3xl font-bold text-yellow-800 mb-6 border-b-2 border-yellow-300 pb-2">Q2 Achievements and October Highlights</h2>
+                // ... Content removed as per user request
+            </section>
+        )} */}
 
-                    {/* 2. September Highlights Header */}
-                    <h4 className="text-xl font-bold text-yellow-700 mt-6 mb-3 border-b border-yellow-200 pb-1">September Performance Highlights:</h4>
 
-                    {/* S1-3-MSW Cluster Dominance */}
-                    <HighlightCard
-                        title="S1-3-MSW Cluster Dominance"
-                        content={`Exceeded Sales Target (${clusterKpiMetrics.find(c => c.cluster === 'S1-3-MSW').salesVsTargetSep.toFixed(2)}%), Exceeded NC Target (${clusterKpiMetrics.find(c => c.cluster === 'S1-3-MSW').ncVsTargetSep.toFixed(2)}%), Achieved High VLTZ (${clusterKpiMetrics.find(c => c.cluster === 'S1-3-MSW').vltz.toFixed(2)}%), and maintained the Lowest Unregistered Transactions (${clusterKpiMetrics.find(c => c.cluster === 'S1-3-MSW').unregisteredTransaction.toFixed(2)}%).`}
-                        isAchievement={false}
-                    />
-                    
-                    {/* S1-2-CP Sales & Trade-in Strength */}
-                    <HighlightCard
-                        title="S1-2-CP Sales & Trade-in Strength"
-                        content={`Wolves Chapel Ash Exceeded Sales Target (101.90%). The cluster achieved the Highest Trade-in % (${clusterKpiMetrics.find(c => c.cluster === 'S1-2-CP').tradeInVsKitSales.toFixed(2)}%) and strong NC Email Capture (Wolves Chapel Ash: 100.00%).`}
-                        isAchievement={false}
-                    />
+        {/* Section 3: Reworked Retention Deep Dive & Incentives Strategy */}
+        <section className="mb-12 p-8 bg-gray-50 rounded-xl shadow-lg">
+            <h2 className="text-3xl font-bold text-gray-700 mb-6 border-b-2 border-gray-200 pb-2">Retention & ATV Strategy: The Power of Layered Value</h2>
+            <p className="text-lg text-gray-700 leading-relaxed mb-6">
+                Our overall retention rate still indicates a gap compared to our southern counterparts. This is not a deficiency in effort; it is an opportunity to <strong>optimise</strong> our sales approach to <strong>maximise</strong> long-term customer value.
+            </p>
+            <p className="text-lg text-gray-700 leading-relaxed mb-6">
+                We have consistently seen that customers who accept <strong>more than one relevant incentive</strong> during their onboarding process show significantly higher retention rates. This is not about giving away more discounts, but about providing layered, comprehensive value that locks them into the ecosystem.
+            </p>
+            <div className="bg-white p-5 rounded-lg shadow-inner border border-indigo-200 mb-6">
+                <h4 className="text-xl font-semibold text-indigo-700 mb-3">Think Beyond the Single Incentive: Layered Examples</h4>
+                <ul className="list-disc list-inside text-lg text-gray-700 space-y-2 ml-4">
+                    <li><strong>App Welcome Offer + Refer a Friend + WRC:</strong> Introducing the App's welcome offer with a Refer-a-Friend incentive and a Wicked Reward Card (WRC) delivers outstanding value and gives the customer the "wow factor" within their initial transaction.</li>
+                    <li><strong>Trade-In + WRC:</strong> The Trade-In solves their immediate need, and the Reward Card creates the incentive for their next purchase.</li>
+                    </ul>
+            </div>
+            <p className="text-lg text-gray-700 leading-relaxed mb-6 font-bold text-indigo-600">
+                Do not stop the conversation after one accepted incentive. Listen for secondary needs, and layer value where it makes sense. This smarter, consultative approach is how we close the retention gap.
+            </p>
 
-                    {/* S1-2-BE High Retention & NC Volume */}
-                    <HighlightCard
-                        title="S1-2-BE High Retention & NC Volume"
-                        content={`Barnstaple Exceeded Sales Target (100.60%) and achieved the Highest Area Retention (48.80%). Exeter drove High NC volume (162 NCs).`}
-                        isAchievement={false}
-                    />
-
-                    {/* S1-1-B Acquisition & WRC Leader */}
-                    <HighlightCard
-                        title="S1-1-B Acquisition & WRC Leader"
-                        content={`Bristol drove the Highest Area NC Acquisition (276 NCs) and achieved the Highest WRC % (71.00%).`}
-                        isAchievement={false}
-                    />
-
-                    <p className="text-sm text-gray-600 mt-4">This list showcases the top cluster and store achievements across Q2 and September key metrics.</p>
-                </>
-            ) : (
-                // FALSE BRANCH: Show "Select All" message
-                <p className="text-lg text-gray-600">Select <strong>"All Clusters"</strong> in the filter above to view the Q2 Achievements and September Highlights.</p>
-            )}
-        </section>
-
-        {/* Section 3: Reworked Retention Deep Dive & Incentives Strategy */}
-        <section className="mb-12 p-8 bg-gray-50 rounded-xl shadow-lg">
-          <h2 className="text-3xl font-bold text-gray-700 mb-6 border-b-2 border-gray-200 pb-2">Retention & ATV Strategy: The Power of Layered Value</h2>
-          <p className="text-lg text-gray-700 leading-relaxed mb-6">
-            Our overall retention rate still indicates a gap compared to our southern counterparts. This is not a deficiency in effort; it is an opportunity to <strong>optimise</strong> our sales approach to <strong>maximise</strong> long-term customer value.
-          </p>
-          <p className="text-lg text-gray-700 leading-relaxed mb-6">
-            We have consistently seen that customers who accept <strong>more than one relevant incentive</strong> during their onboarding process show significantly higher retention rates. This is not about giving away more discounts, but about providing layered, comprehensive value that locks them into the ecosystem.
-          </p>
-          <div className="bg-white p-5 rounded-lg shadow-inner border border-indigo-200 mb-6">
-            <h4 className="text-xl font-semibold text-indigo-700 mb-3">Think Beyond the Single Incentive: Layered Examples</h4>
-            <ul className="list-disc list-inside text-lg text-gray-700 space-y-2 ml-4">
-              <li><strong>App Welcome Offer + Refer a Friend + WRC:</strong> Introducing the App's welcome offer with a Refer-a-Friend incentive and a Wicked Reward Card (WRC) delivers outstanding value and gives the customer the "wow factor" within their initial transaction.</li>
-              <li><strong>Trade-In + WRC:</strong> The Trade-In solves their immediate need, and the Reward Card creates the incentive for their next purchase.</li>
-              </ul>
-          </div>
-          <p className="text-lg text-gray-700 leading-relaxed mb-6 font-bold text-indigo-600">
-            Do not stop the conversation after one accepted incentive. Listen for secondary needs, and layer value where it makes sense. This smarter, consultative approach is how we close the retention gap.
-          </p>
-
-          <div className="bg-blue-100 p-5 rounded-lg shadow-inner mt-8">
-            <h3 className="text-2xl font-semibold text-blue-800 mb-3">Incentive Consistency in Turbulent Times</h3>
-            <p className="text-lg text-blue-700 leading-relaxed mb-4">
-              We observe that the clusters and stores seeing the best results in this turbulent time for our industry are the ones who are consistently performing well across <strong>multiple incentives</strong>. This dedication to driving both acquisition and loyalty through incentives is the single most reliable predictor of success.
-            </p>
-          </div>
-        </section>
+            <div className="bg-blue-100 p-5 rounded-lg shadow-inner mt-8">
+                <h3 className="text-2xl font-semibold text-blue-800 mb-3">Incentive Consistency in Turbulent Times</h3>
+                <p className="text-lg text-blue-700 leading-relaxed mb-4">
+                    We observe that the clusters and stores seeing the best results in this turbulent time for our industry are the ones who are consistently performing well across <strong>multiple incentives</strong>. This dedication to driving both acquisition and loyalty through incentives is the single most reliable predictor of success.
+                </p>
+            </div>
+        </section>
 
         {/* New Section: NC Acquisition vs Retention Deep Dive (Chart + Narrative) */}
         <section className="mb-12 p-8 bg-pink-50 rounded-xl shadow-lg">
@@ -1377,9 +1404,9 @@ const App = () => {
 
         {/* Raw Data Table Section - NOW INTERACTIVE ON HOVER */}
         <section className="mb-12 p-8 bg-gray-50 rounded-xl shadow-lg">
-            <h2 className="text-3xl font-bold text-gray-700 mb-6 border-b-2 border-gray-200 pb-2">September Store-Level KPI Detail</h2>
+            <h2 className="text-3xl font-bold text-gray-700 mb-6 border-b-2 border-gray-200 pb-2">October Store-Level KPI Detail</h2>
             <p className="text-lg text-gray-700 leading-relaxed mb-6 font-semibold">
-                <strong>For Your Action Plan:</strong> This table provides the full, store-specific KPI breakdown required to drive your individual coaching and improvement plans for October. Use the Cluster filter above to focus on your team's numbers.
+                <strong>For Your Action Plan:</strong> This table provides the full, store-specific KPI breakdown required to drive your individual coaching and improvement plans for November. Use the Cluster filter above to focus on your team's numbers.
             </p>
             <SeptemberKpiDetailTable />
         </section>
@@ -1390,17 +1417,24 @@ const App = () => {
         {/* ========================================================= */}
 
 
-        {/* Section 5: Google Reviews & TW App Signups */}
-        <section className="mb-12 p-8 bg-teal-50 rounded-xl shadow-lg">
-          <h2 className="text-3xl font-bold text-teal-700 mb-6 border-b-2 border-teal-200 pb-2">Customer Engagement: Google Reviews Ranking & TW App Adoption {selectedCluster !== 'All' ? `— ${selectedCluster}` : ''}</h2>
+        {/* Section 5: Google Reviews & TW App Signups */}
+        <section className="mb-12 p-8 bg-teal-50 rounded-xl shadow-lg">
+          <h2 className="text-3xl font-bold text-teal-700 mb-6 border-b-2 border-teal-200 pb-2">Customer Engagement: Google Reviews Ranking & TW App Adoption {selectedCluster !== 'All' ? `— ${selectedCluster}` : ''}</h2>
 
-          {/* Google Reviews - NOW A RANKING TABLE */}
-          <div className="mb-8 p-6 bg-white rounded-lg shadow-xl">
-            <h3 className="text-2xl font-semibold text-teal-800 mb-4">Google Local Ranking Performance (September)</h3>
+          {/* Google Reviews - NOW A RANKING TABLE */}
+          <div className="mb-8 p-6 bg-white rounded-lg shadow-xl">
+            <h3 className="text-2xl font-semibold text-teal-800 mb-4">Google Local Ranking Performance (September)</h3>
                 <GoogleReviewTable />
-            <p className="text-sm text-gray-600 mt-4">Shout-outs to <strong>Madeley</strong>, <strong>Rumney</strong>, and <strong>Wolves Penn Road</strong> for achieving Rank 1 status! Maintaining Rank 1 is key to being seen by local searchers. Focus on stores with falling ranks (red arrows) to implement immediate recovery strategies.</p>
-                <p className="text-sm text-gray-600 mt-2">Special commendation goes to <strong>Bristol</strong>, <strong>Madeley</strong>, and <strong>Wellington</strong> for their tremendous focus and performance in obtaining a high volume of new Google reviews this month.</p>
-          </div>
+            {/* UPDATED TEXT: Focus on Rank 1 performers */}
+            <p className="text-sm text-gray-600 mt-4">
+                Shout-outs to <strong>Madeley</strong>, <strong>Wolves Chapel Ash</strong>, and <strong>Wolves Penn Road</strong> for achieving Rank 1 status this month! 
+                Maintaining Rank 1 is key to being seen by local searchers. Focus on stores with falling ranks (red arrows), especially **Gloucester** (Rank 8), to implement immediate recovery strategies.
+            </p>
+            {/* UPDATED TEXT: Highlight top reviewers */}
+            <p className="text-sm text-gray-600 mt-2">
+                Special commendation goes to <strong>Madeley</strong> (40 reviews), <strong>Wellington</strong> (35 reviews), and <strong>Bristol</strong> (21 reviews) for their tremendous focus and performance in obtaining a high volume of new Google reviews this month.
+            </p>
+          </div>
 
             {/* New Section on Google Ranking Importance */}
             <div className="mb-8 p-6 bg-teal-100 rounded-lg shadow-inner">
@@ -1420,117 +1454,86 @@ const App = () => {
                 </p>
             </div>
 
-          {/* TW App Signups - ACTUAL DATA (Sept Snapshot vs Average) - NOW FILTERED */}
-          <div className="mb-8 p-6 bg-white rounded-lg shadow-sm">
-            <h3 className="text-2xl font-semibold text-teal-800 mb-4">TW App Adoption: September Snapshot vs Area Average</h3>
-            <p className="text-sm text-gray-600 mb-4">This chart compares each store's September <strong>App Adoption Rate</strong> against the Area Average of <strong>{septemberAreaAverage.toFixed(1)}%</strong>. Stores exceeding the red line are leading the way in digital engagement.</p>
-            <ResponsiveContainer width="100%" height={400}>
-              <BarChart data={filteredTwAppSignupSeptData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#e0e0e0" />
-                <XAxis dataKey="store" angle={-45} textAnchor="end" height={100} interval={0} tick={{ fill: '#4a5568', fontSize: 12 }} />
-                <YAxis tickFormatter={(value) => `${value}%`} domain={[0, 60]} tick={{ fill: '#4a5568' }} />
-                <Tooltip formatter={(value) => `${value.toFixed(2)}%`} />
-                <Legend wrapperStyle={{ paddingTop: '20px' }} />
-                <Bar dataKey="percentHaveApp" name="% Customer App Adoption (Sept)" fill={appBarColor} radius={[8, 8, 0, 0]} />
-                {/* Reference Line for Area Average */}
-                <ReferenceLine y={septemberAreaAverage} stroke={averageLineColor} strokeDasharray="3 3" label={{ value: `Area Average: ${septemberAreaAverage.toFixed(1)}%`, position: 'top', fill: averageLineColor }} />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
+          {/* NEW: NC App Adoption vs Missed Opportunity Chart (MOVED UP) */}
+          <NcAppAdoptionChart />
 
-            {/* TW App Signups - PROGRESS OVER TIME - NOW FILTERED */}
-          <div className="mb-8 p-6 bg-indigo-50 rounded-lg shadow-sm">
-            <h3 className="text-2xl font-semibold text-indigo-800 mb-4">App Adoption Rate Over Time (Q2 Progress by Store)</h3>
-            <p className="text-sm text-gray-600 mb-4">This Line Chart tracks the <strong>App Adoption</strong> rate progress for all stores from July through September. Look for steep upward trends to identify stores with the most momentum!</p>
-            <ResponsiveContainer width="100%" height={450}>
-              <LineChart data={filteredAppAdoptionProgressData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#e0e0e0" />
-                <XAxis dataKey="store" angle={-45} textAnchor="end" height={100} interval={0} tick={{ fill: '#4a5568', fontSize: 12 }} />
-                <YAxis tickFormatter={(value) => `${value}%`} domain={[0, 60]} tick={{ fill: '#4a5568' }} />
-                <Tooltip formatter={(value) => `${value.toFixed(2)}%`} />
-                <Legend wrapperStyle={{ paddingTop: '20px' }} />
+          {/* TW App Signups - ACTUAL DATA (Oct Snapshot vs Average) - NOW FILTERED */}
+          <div className="mb-8 p-6 bg-white rounded-lg shadow-sm">
+            <h3 className="text-2xl font-semibold text-teal-800 mb-4">TW App Adoption: October Snapshot vs Area Average</h3>
+            <p className="text-sm text-gray-600 mb-4">This chart compares each store's October <strong>App Adoption Rate</strong> against the Area Average of <strong>{octoberAreaAverage.toFixed(1)}%</strong>. Stores exceeding the red line are leading the way in digital engagement.</p>
+            <ResponsiveContainer width="100%" height={400}>
+              <BarChart data={filteredTwAppSignupOctData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#e0e0e0" />
+                <XAxis dataKey="store" angle={-45} textAnchor="end" height={100} interval={0} tick={{ fill: '#4a5568', fontSize: 12 }} />
+                <YAxis tickFormatter={(value) => `${value}%`} domain={[0, 80]} tick={{ fill: '#4a5568' }} />
+                <Tooltip formatter={(value) => `${value.toFixed(2)}%`} />
+                <Legend wrapperStyle={{ paddingTop: '20px' }} />
+                <Bar dataKey="percentHaveApp" name="% Customer App Adoption (Oct)" fill={appBarColor} radius={[8, 8, 0, 0]} />
+                {/* Reference Line for Area Average */}
+                <ReferenceLine y={octoberAreaAverage} stroke={averageLineColor} strokeDasharray="3 3" label={{ value: `Area Average: ${octoberAreaAverage.toFixed(1)}%`, position: 'top', fill: averageLineColor }} />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+          
+            {/* TW App Signups - PROGRESS OVER TIME - NOW FILTERED (MOVED DOWN) */}
+          <div className="mb-8 p-6 bg-indigo-50 rounded-lg shadow-sm">
+            <h3 className="text-2xl font-semibold text-indigo-800 mb-4">App Adoption Rate Over Time (July - October Progress by Store)</h3>
+            <p className="text-sm text-gray-600 mb-4">This Line Chart tracks the <strong>App Adoption</strong> rate progress for all stores from July through October. Look for steep upward trends to identify stores with the most momentum!</p>
+            <ResponsiveContainer width="100%" height={450}>
+              <LineChart data={filteredAppAdoptionProgressData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#e0e0e0" />
+                <XAxis dataKey="store" angle={-45} textAnchor="end" height={100} interval={0} tick={{ fill: '#4a5568', fontSize: 12 }} />
+                <YAxis tickFormatter={(value) => `${value}%`} domain={[0, 80]} tick={{ fill: '#4a5568' }} />
+                <Tooltip formatter={(value) => `${value.toFixed(2)}%`} />
+                <Legend wrapperStyle={{ paddingTop: '20px' }} />
                 
                 {/* Lines for the three months */}
                 <Line type="monotone" dataKey="July" stroke="#4A90E2" strokeWidth={2} dot={false} name="July Adoption %" />
                 <Line type="monotone" dataKey="August" stroke="#FFC107" strokeWidth={2} dot={{ r: 4 }} activeDot={{ r: 8 }} name="August Adoption %" />
-                <Line type="monotone" dataKey="September" stroke="#8BC34A" strokeWidth={3} dot={{ r: 5 }} activeDot={{ r: 8 }} name="September Adoption %" />
-              </LineChart>
-            </ResponsiveContainer>
-            <p className="text-lg text-gray-800 leading-relaxed mt-4 font-semibold text-centre">
+                <Line type="monotone" dataKey="September" stroke="#5B5F97" strokeWidth={2} dot={{ r: 4 }} activeDot={{ r: 8 }} name="September Adoption %" />
+                <Line type="monotone" dataKey="October" stroke="#E91E63" strokeWidth={3} dot={{ r: 5 }} activeDot={{ r: 8 }} name="October Adoption %" />
+              </LineChart>
+            </ResponsiveContainer>
+            <p className="text-lg text-gray-800 leading-relaxed mt-4 font-semibold text-centre">
                 <strong>Key to Success:</strong> The App Adoption rate is most heavily influenced by successful sign-ups with new customers (NC). Using the App as the standard approach for every NC conversation is the fastest way to drive this metric up!
             </p>
-          </div>
+          </div>
+          
+        </section>
 
-        </section>
-
-
-        {/* Section 4: Audit Results - NOW COMPLETE AND CLEANED */}
-        <section className="mb-12 p-8 bg-indigo-50 rounded-xl shadow-lg">
-          <h2 className="text-3xl font-bold text-indigo-700 mb-6 border-b-2 border-indigo-200 pb-2">H1 Audit Results: Ensuring Excellence {selectedCluster !== 'All' ? `— ${selectedCluster}` : ''}</h2>
-          <p className="text-md text-green-700 font-semibold mb-6">Review your H1 Audit performance below. Note that the Audit scores shown are the cluster averages of the store scores listed in your data.</p>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            {/* MWW Audit Result */}
-            <div className="p-6 bg-white rounded-lg shadow-sm">
-              <h3 className="text-2xl font-semibold text-indigo-800 mb-4">Mr Wicked Way (MWW) Audit Results (Cluster Average)</h3>
-              <ResponsiveContainer width="100%" height={300}>
-                <BarChart data={filteredMwwAuditData} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#e0e0e0" />
-                  <XAxis dataKey="cluster" tick={{ fill: '#4a5568' }} />
-                  <YAxis tickFormatter={(value) => `${value.toFixed(1)}%`} domain={[80, 100]} tick={{ fill: '#4a5568' }} />
-                  <Tooltip formatter={(value) => `${value.toFixed(2)}%`} />
-                  <Legend />
-                  <Bar dataKey="result" name="Audit Result %" fill="#6a0dad" radius={[10, 10, 0, 0]} />
-              </BarChart>
-              </ResponsiveContainer>
-              <p className="text-sm text-gray-600 mt-4">MWW Audits ensure operational excellence and store standards are consistently high. These scores are a direct reflection of team discipline.</p>
-            </div>
-
-            {/* Compliance Results */}
-            <div className="p-6 bg-white rounded-lg shadow-sm">
-              <h3 className="text-2xl font-semibold text-indigo-800 mb-4">Compliance Audit Results (Cluster Average)</h3>
-              <ResponsiveContainer width="100%" height={300}>
-                <BarChart data={filteredComplianceAuditData} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#e0e0e0" />
-                  <XAxis dataKey="cluster" tick={{ fill: '#4a5568' }} />
-                  <YAxis tickFormatter={(value) => `${value.toFixed(1)}%`} domain={[90, 100]} tick={{ fill: '#4a5568' }} />
-                  <Tooltip formatter={(value) => `${value.toFixed(2)}%`} />
-                  <Legend />
-                  <Bar dataKey="result" name="Audit Result %" fill="#FF4500" radius={[10, 10, 0, 0]} />
-              </BarChart>
-              </ResponsiveContainer>
-              <p className="text-sm text-gray-600 mt-4">Compliance Audits are mandatory for secure and responsible operations. Striving for 100% is non-negotiable.</p>
-            </div>
-          </div>
-        </section>
 
         {/* ========================================================= */}
-        {/* 4. TARGETS (HIDDEN BY QUIZ) */}
+        {/* 4. AUDIT RESULTS (REMOVED AS REQUESTED) */}
+        {/* ========================================================= */}
+
+
+        {/* ========================================================= */}
+        {/* 5. TARGETS (HIDDEN BY QUIZ) */}
         {/* ========================================================= */}
 
         
-        {/* Section 6: Knowledge Check / October Targets (CONDITIONAL) */}
+        {/* Section 6: Knowledge Check / November Targets (CONDITIONAL) */}
         <section className="mb-12">
-            <h2 className="text-3xl font-bold text-gray-800 mb-6 border-b-2 border-gray-400 pb-2 text-centre">Knowledge Check: Unlock October Targets</h2>
+            <h2 className="text-3xl font-bold text-gray-800 mb-6 border-b-2 border-gray-400 pb-2 text-centre">Knowledge Check: Unlock November Targets</h2>
             
             <div className="flex justify-centre mb-8">
                 <QuizComponent />
             </div>
 
-            {/* October Targets are only rendered if the quiz is passed */}
+            {/* November Targets are only rendered if the quiz is passed */}
             {quizPassed ? (
-                <OctoberTargetsTable />
+                <NovemberTargetsTable />
             ) : (
                 <div className="mt-12 p-6 bg-red-50 rounded-xl shadow-lg border-t-4 border-red-600 text-centre">
-                    <h3 className="text-2xl font-bold text-red-700">October Targets Hidden</h3>
+                    <h3 className="text-2xl font-bold text-red-700">November Targets Hidden</h3>
                     <p className="text-lg text-red-800 mt-2">Complete the Knowledge Check above to review your forward-looking goals!</p>
                 </div>
             )}
         </section>
 
-      </div>
-        </div>
-  );
+      </div>
+        </div>
+    );
 };
 
 export default App;
-
