@@ -1174,7 +1174,7 @@ const App = () => {
       <div className="max-w-7xl mx-auto bg-white rounded-xl shadow-lg p-8">
         
         {/* Main Title updated for Q2 Review and Sept Month End */}
-        <h1 className="text-4xl font-extrabold text-centre text-indigo-800 mb-6">Performance Review: October Month-End & Q4 Planning</h1>
+        <h1 className="text-4xl font-extrabold text-centre text-indigo-800 mb-6">Performance Review: October Month-End </h1>
         
         {/* INTERACTIVE CLUSTER FILTER */}
         <div className="flex justify-centre items-centre mb-10 p-4 bg-indigo-100 rounded-lg shadow-inner">
